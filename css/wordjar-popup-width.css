@@ -1,0 +1,56 @@
+/* WordJar popup width normalization
+   Keep every popup/modal visually consistent.
+   Style only: no display / visibility forcing. */
+
+.app {
+  --wordjar-popup-width: 390px;
+  --wordjar-popup-max-width: calc(100vw - 32px);
+  --wordjar-popup-width-rule: min(var(--wordjar-popup-width), var(--wordjar-popup-max-width));
+}
+
+.app .modal-card,
+.app .deck-form-modal,
+.app .deck-options-card,
+.app .clean-filter-modal,
+.app .rn-move-card,
+.app .share-card-modal,
+.app .share-modal,
+.app .export-modal,
+.app .import-modal,
+.app .reader-modal-card,
+.app .settings-modal-card,
+.app .confirm-card,
+.app .dialog-card,
+.app .popup-card,
+.app [role='dialog'] > .card {
+  width: var(--wordjar-popup-width-rule);
+  max-width: var(--wordjar-popup-width-rule);
+  box-sizing: border-box;
+}
+
+.app .overlay.open .modal-card,
+.app .overlay.open .deck-form-modal,
+.app .overlay.open .deck-options-card,
+.app .overlay.open .clean-filter-modal {
+  width: var(--wordjar-popup-width-rule);
+  max-width: var(--wordjar-popup-width-rule);
+}
+
+.rn-move-card {
+  width: var(--wordjar-popup-width-rule);
+  max-width: var(--wordjar-popup-width-rule);
+  box-sizing: border-box;
+}
+
+html body .app #shareAdjustModal.overlay.open .modal-card.share-adjust-modal,
+html body .app #shareAdjustModal.overlay.open .share-adjust-modal {
+  width: var(--wordjar-popup-width-rule);
+  max-width: var(--wordjar-popup-width-rule);
+  box-sizing: border-box;
+}
+
+@media (max-width: 430px) {
+  .app {
+    --wordjar-popup-max-width: calc(100vw - 28px);
+  }
+}

@@ -1,0 +1,29 @@
+/* ═══════════════════════════════════════════
+   MAIN ENTRY — WordJar modular CSS
+
+   index.html loads this file directly.
+   Load order matters: base → components → layout → pages → deck-cards → flashcard → modals → share → fixes → theme → popup width → black accent → background tuning → feature modules → final iOS type scale → responsive web → compact top nav → Mushy unified header → Mushy chat background → detail actions fix
+   ═══════════════════════════════════════════ */
+
+@import url('base.css');
+@import url('components.css');
+@import url('layout.css');
+@import url('pages.css');
+@import url('deck-cards.css');
+@import url('flashcard.css');
+@import url('modals.css');
+@import url('share.css');
+@import url('reader-notes-overlap-fix.css');
+@import url('app-icon-background-reset.css');
+@import url('wordjar-chatgpt-theme.css');
+@import url('wordjar-popup-width.css');
+@import url('wordjar-black-accent.css');
+@import url('wordjar-background-tuning.css');
+@import url('wordjar-app-center-fix.css');
+@import url('wordjar-mushy-chat.css');
+@import url('wordjar-ios-font-system.css');
+@import url('wordjar-responsive-web.css');
+@import url('wordjar-top-nav-compact.css');
+@import url('wordjar-mushy-unified-header.css');
+@import url('wordjar-mushy-chat-bg.css');
+@import url('wordjar-detail-actions-fix.css');

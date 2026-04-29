@@ -1,0 +1,169 @@
+/* ═══════════════════════════════════════════
+   FLASHCARD — Study Session UI
+   ═══════════════════════════════════════════ */
+
+/* ── Top bar ── */
+.fc-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+.fc-close-btn {
+  background: none; border: none;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 4px;
+  transition: opacity 0.2s;
+  margin-left: -4px;
+}
+.fc-close-btn:hover { opacity: 0.6; }
+.fc-close-btn svg   { width: 26px; height: 26px; stroke-width: 2; }
+
+/* Anki-style card counter */
+.fc-stats-top { font-size: 15px; font-weight: 700; letter-spacing: 0.5px; }
+.fc-s-n   { color: var(--anki-new);   }
+.fc-s-l   { color: var(--anki-learn); }
+.fc-s-r   { color: var(--anki-due);   }
+.fc-s-plus{ color: var(--ink); margin: 0 2px; font-weight: 500; }
+
+/* ── 3-D flip card ── */
+.fc-scene {
+  perspective: 1200px;
+  width: 100%;
+  flex: 1;
+  padding: 0 20px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.fc-card-inner {
+  position: relative;
+  width: 100%; height: 100%;
+  text-align: left;
+  transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+.fc-card-inner.flipped { transform: rotateY(180deg); }
+
+.fc-card-front,
+.fc-card-back {
+  position: absolute;
+  width: 100%; height: 100%;
+  backface-visibility: hidden;
+  background: var(--sur);
+  border: 1px solid var(--bdr);
+  border-radius: 20px;
+  box-shadow: var(--sh);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.fc-card-back { transform: rotateY(180deg); overflow-y: auto; cursor: default; }
+
+/* Front face */
+.front-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.fc-word-f { font-size: 42px; font-weight: 700; color: var(--ink); line-height: 1.2; letter-spacing: -1px; margin-bottom: 6px; }
+.fc-pron-f { font-size: 15px; color: var(--ink3); margin-bottom: 24px; }
+.fc-hint-f {
+  font-size: 13px; font-weight: 600; color: var(--ink3);
+  padding: 14px; border: 2px dashed var(--bdr);
+  border-radius: 12px; background: var(--sur2);
+  margin-top: auto; text-align: center; width: 100%;
+}
+
+/* Back face */
+.fc-word-b   { font-size: 28px; font-weight: 700; color: var(--ink); line-height: 1.2; letter-spacing: -0.5px; }
+.fc-pron-b   { font-size: 13px; color: var(--ink3); margin-top: 4px; margin-bottom: 20px; }
+.ans-label   { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.fc-meaning  { font-size: 16px; color: var(--ink2); margin-bottom: 20px; line-height: 1.6; }
+.fc-ex       { font-size: 15px; color: var(--ink2); font-style: italic; line-height: 1.6; margin-bottom: 20px; }
+.fc-ex .hl   { font-weight: 700; color: var(--ink); border-bottom: 2px solid var(--bdr2); }
+.fc-nt       { font-size: 14px; color: var(--ink2); line-height: 1.5; background: var(--sur2); padding: 12px 16px; border-radius: 12px; }
+
+/* Tags */
+.tag-row      { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
+.tag-row.back { justify-content: flex-start; margin-top: 0; }
+.tag-pill     { display: inline-flex; align-items: center; background: var(--tag-bg); color: var(--tag-txt); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 16px; border: 1px solid var(--bdr); }
+
+/* TTS / action buttons on card */
+.card-tts-row {
+  display: flex; gap: 10px;
+  margin-top: auto;
+  width: 100%;
+  border-top: 1px solid var(--bdr);
+  padding-top: 20px;
+}
+.tts-action-btn {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--sur);
+  border: 1px solid var(--bdr);
+  color: var(--ink);
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  padding: 12px; border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tts-action-btn:hover { background: var(--sur2); border-color: var(--bdr2); }
+
+/* ── Rating buttons ── */
+.fc-action-area {
+  padding: 12px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  background: var(--bg);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.rating-wrap { width: 100%; display: block; }
+
+.rrow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.rb {
+  padding: 12px 4px;
+  border-radius: 14px;
+  border: 1px solid var(--bdr);
+  font-family: inherit;
+  background: var(--sur);
+  cursor: pointer;
+  transition: all .2s ease;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 4px;
+  min-height: 60px;
+}
+.rb:hover { background: var(--sur2); border-color: var(--bdr2); }
+
+.rb span.rt { font-size: 14px; font-weight: 700; color: var(--ink); }
+.rb span.rs { font-size: 11px; font-weight: 600; color: var(--ink3); }
+
+.rb-a span.rt { color: var(--anki-again); }
+.rb-h span.rt { color: #d97706; }
+.rb-g span.rt { color: var(--anki-due);   }
+.rb-e span.rt { color: var(--anki-new);   }
+
+/* Pronunciation font override */
+#dtPron, .fc-pron-f, .fc-pron-b, #lPron, #fPron {
+  font-family: Arial, Helvetica, "Noto Sans", sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}

@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-sca
+le=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WordJar - SUMMOUR</title>
+<link rel="icon" href="assets/brand/logo.jpg" type="image/png">
+<link rel="apple-touch-icon" href="assets/brand/logo.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="WordJar">
+<meta name="mobile-web-app-capable" content="yes">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Optional Firebase SDK for manual cloud backup sync. Fill FIREBASE_CONFIG in firebase-config.js to enable it. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script>
+// Firebase config - loaded from external file for security
+let FIREBASE_CONFIG = null;
+let cloudAuth = null, cloudDb = null, cloudUser = null;
+
+// Try to load config from external file
+try {
+  // This will be loaded synchronously if firebase-config.js exists
+  // If not, FIREBASE_CONFIG remains null and cloud features are disabled
+} catch (err) {
+  console.warn('Firebase config not loaded:', err.message);
+}
+</script>
+<script src="firebase-config.js"></script>
+  
+<link rel="stylesheet" href="css/style.css">
+  
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+<div class="app">
+
+<div class="splash-screen" id="splashScreen">
+  <div class="splash-stage active" id="splashWord">
+    <div class="splash-logo">WordJar</div>
+  </div>
+
+  <div class="splash-stage" id="splashGifStage">
+    <img
+      src="assets/avatars/Duckyjump_fall_land.gif"
+      alt="WordJar character"
+      class="splash-character"
+    >
+  </div>
+</div>
+
+<div class="main-header" id="mainHeader">
+  <div class="brand">WordJar</div>
+  <div class="top-nav">
+    <button class="top-btn active" id="tb-home" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+    <button class="top-btn" id="tb-decks" onclick="nav('decks')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg></button>
+    <button class="top-btn" id="tb-words" onclick="nav('words')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
+    <button class="top-btn" id="tb-account" onclick="nav('account')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+  </div>
+</div>
+
+<div class="page active" id="pg-home">
+  <div class="home-hero"><div class="home-title">Dashboard</div></div>
+  <div class="calendar-strip" id="weekCalendar"></div>
+  <div class="plan-card">
+    <div class="ring-wrap">
+      <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="none" stroke="var(--sur2)" stroke-width="8"/><circle id="ringC" cx="40" cy="40" r="32" fill="none" stroke="var(--ac)" stroke-width="8" stroke-linecap="round" stroke-dasharray="201.06" stroke-dashoffset="201.06" transform="rotate(-90 40 40)" style="transition:stroke-dashoffset .8s ease"/></svg>
+      <div class="ring-center"><div class="ring-pct" id="ringPct">0%</div><div class="ring-sub">TODAY</div></div>
+    </div>
+    <div class="plan-stats">
+      <div class="psr"><div class="psl">Words Reviewed</div><div class="psv" id="hDone">0</div></div>
+      <div class="psr"><div class="psl">Total Library</div><div class="psv" id="hTotal">0</div></div>
+    </div>
+  </div>
+  <div class="streak-strip"><div class="streak-lbl">Study Streak</div><div class="streak-val" id="hStreak">0</div></div>
+  <div class="home-acts">
+    <button class="btn btn-p" style="flex:2" onclick="startLearn()">Study Mode</button>
+    <button class="btn btn-s" style="flex:1" onclick="startFC(null)">Quick</button>
+  </div>
+</div>
+
+<div class="page" id="pg-decks">
+  <div class="ph"><div class="ph-title">Decks</div><button class="btn-s" style="width:auto; padding:8px 14px; font-size:13px; border-radius:10px;" onclick="openDeckModal(null)">Add Deck</button></div>
+  <div id="deckList"></div>
+</div>
+
+<div class="study-page" id="pg-deck-overview" style="overflow-y:auto;">
+  <div class="topbar">
+    <button class="back-btn" onclick="nav('decks')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  
+  <div class="overview-hero">
+    <div class="ov-deck-name" id="ovTitleWrap"><span id="ovTitle">Deck Name</span></div>
+    <div class="ov-desc" id="ovDesc">Description goes here</div>
+  </div>
+
+  <div class="stats-box">
+    <div class="sb-row"><div class="sb-lbl">New:</div><div class="sb-val sb-new" id="ovNew">0</div></div>
+    <div class="sb-row"><div class="sb-lbl">Learning:</div><div class="sb-val sb-lrn" id="ovLrn">0</div></div>
+    <div class="sb-row"><div class="sb-lbl">Review:</div><div class="sb-val sb-rev" id="ovRev">0</div></div>
+  </div>
+
+  <div class="stats-box">
+    <div class="sb-row"><div class="sb-lbl">Total Words:</div><div class="sb-val sb-tot" id="ovTotal">0</div></div>
+  </div>
+
+  <div style="padding: 0 20px 30px; margin-top:auto; display:flex; flex-direction:column; gap:10px;">
+    <button class="btn btn-p btn-full" style="padding: 14px; font-size: 15px; border-radius: 14px;" onclick="startDeckSession()">Study Now</button>
+    <button class="btn btn-s btn-full" style="padding: 12px; font-size: 14px; border-radius: 14px;" onclick="openDeckOptionsModal(currentStudyDeckId)">Learning Settings</button>
+  </div>
+</div>
+
+<div class="study-page" id="pg-deck-cards" style="overflow-y:auto; background:var(--bg);">
+  <div class="topbar">
+    <button class="back-btn" onclick="if(typeof isSelectMode !== 'undefined' && isSelectMode) toggleSelectMode(); else nav(prevDeckCardsPage || 'decks')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div style="flex:1; font-weight:700; font-size:16px; text-align:center;" id="dcTitle">Cards</div>
+    <button id="btnSelectCards" class="btn-s" style="border:none; background:none; font-size:14px; font-weight:700; color:var(--anki-new); padding:0; margin-right:4px;" onclick="toggleSelectMode()">Select</button>
+  </div>
+  <div class="word-list" id="deckCardsList" style="padding-top:16px;"></div>
+<div id="cardSelectActions" class="select-action-bar">
+  <div class="select-action-panel">
+    <div id="selectCountBadge" class="select-count-badge">0 selected</div>
+
+    <div class="select-action-buttons">
+      <button class="btn btn-danger-soft" type="button" onclick="deleteSelectedCards()">
+        Delete
+      </button>
+
+      <button id="btnAutoFillSelectedCards" class="btn btn-soft-fill" type="button" onclick="autoFillSelectedCards()">
+        Auto Fill
+      </button>
+
+      <button class="btn btn-p" type="button" onclick="openMoveSelectedModal()">
+        Move
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="page" id="pg-words">
+  <div class="ph" style="padding-bottom:12px;">
+    <div class="ph-title">Dictionary</div>
+  </div>
+
+  <div class="search-row">
+    <div class="sw">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input class="si" id="si" type="text" placeholder="Search words..." oninput="renderWords()">
+    </div>
+
+    <button class="dict-add-btn" type="button" onclick="openWordModal(null)" aria-label="Add word">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="dict-filter-summary" id="wordFilterSummary" onclick="openWordFilterModal()">
+    All words
+  </div>
+
+  <div class="word-list" id="wordList"></div>
+</div>
+  
+<div class="study-page" id="pg-fc">
+  <div class="fc-topbar">
+    <button class="fc-close-btn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div class="fc-stats-top" id="fcStatsTop">
+      <span class="fc-s-n">0</span><span class="fc-s-plus">+</span><span class="fc-s-l">0</span><span class="fc-s-plus">+</span><span class="fc-s-r">0</span>
+    </div>
+    <div style="width: 36px;"></div>
+  </div>
+
+  <div id="fcMain" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+    <div class="fc-scene">
+      <div class="fc-card-inner" id="fcCardInner" onclick="revealFC()">
+        <div class="fc-card-front">
+          <div class="front-content">
+            <div class="fc-word-f" id="fcWordF">Word</div>
+            <div class="fc-pron-f" id="fcPronF">/pron/</div>
+            <div class="tag-row" id="fcTagsF"></div>
+            <button class="tts-action-btn" style="padding: 8px 16px; border-radius: 20px; font-size:13px; flex:none;" onclick="playFCWord(event)">
+                Listen
+            </button>
+          </div>
+          <div class="fc-hint-f">Tap card to show answer</div>
+        </div>
+
+        <div class="fc-card-back" onclick="event.stopPropagation()">
+          <div class="fc-word-b" id="fcWordB">Word</div>
+          <div class="fc-pron-b" id="fcPronB">/pron/</div>
+          <div class="tag-row back" id="fcTagsB"></div>
+
+          <div class="ans-label">Meaning:</div>
+          <div class="fc-meaning" id="fcMeaning"></div>
+          
+          <div id="fcExWrap">
+            <div class="ans-label">Example:</div>
+            <div class="fc-ex" id="fcEx"></div>
+          </div>
+          
+          <div id="fcNtWrap">
+            <div class="ans-label">Notes:</div>
+            <div class="fc-nt" id="fcNt"></div>
+          </div>
+
+          <div class="card-tts-row">
+            <button class="tts-action-btn" onclick="playFCWord(event)">Listen</button>
+            <button class="tts-action-btn" id="fcPlayEx" style="display:none" onclick="playFCEx(event)">Example</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc-action-area">
+      <div class="rating-wrap" id="fcRatingMode">
+        <div class="rrow">
+          <button class="rb rb-a" onclick="rateFC(0)"><span class="rt">Again</span><span class="rs">&lt;1m</span></button>
+          <button class="rb rb-h" onclick="rateFC(3)"><span class="rt">Hard</span><span class="rs">10m</span></button>
+          <button class="rb rb-g" onclick="rateFC(4)"><span class="rt">Good</span><span class="rs">1d</span></button>
+          <button class="rb rb-e" onclick="rateFC(5)"><span class="rt">Easy</span><span class="rs">4d</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fcDone" style="display:none; flex:1; flex-direction:column;">
+    <div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <div class="empty-title">Deck Completed</div>
+      <div class="empty-sub">All due cards reviewed.<br>Come back tomorrow.</div>
+      <button class="btn btn-p" style="width:auto;padding:12px 24px; margin-top:12px;" onclick="nav('home')">Back to Home</button>
+    </div>
+  </div>
+</div>
+
+<div class="study-page" id="pg-learn">
+  <div class="fc-topbar">
+    <button class="fc-close-btn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div id="lCnt" style="font-weight:700; font-size:15px;">0 / 0</div>
+    <div style="width: 36px;"></div>
+  </div>
+
+  <div id="lMain" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+    <div class="fc-scene">
+      <div class="fc-card-inner" style="cursor:default;">
+        <div class="fc-card-front" style="overflow-y:auto; justify-content:flex-start; text-align:left; padding:24px;">
+          <div class="fc-word-b" id="lWord">Word</div>
+          <div class="fc-pron-b" id="lPron">/pron/</div>
+          <div class="tag-row back" id="lTags"></div>
+          <div class="ans-label">Meaning:</div>
+          <div class="fc-meaning" id="lMeaning"></div>
+          <div class="ans-label">Example:</div>
+          <div class="fc-ex" id="lSentence"></div>
+          <div style="flex:1"></div>
+          <div class="card-tts-row">
+            <button class="tts-action-btn" onclick="playLearnWord(event)">Listen</button>
+            <button class="tts-action-btn" id="lPlayEx" style="display:none" onclick="playLearnEx(event)">Example</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-action-area" style="min-height: 80px;">
+      <button class="btn btn-p btn-full" style="padding: 14px; font-size:15px; border-radius:14px;" onclick="nextLearn()">Mark as Learned</button>
+    </div>
+  </div>
+
+  <div id="lDone" style="display:none; flex:1; flex-direction:column;">
+    <div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253"/></svg>
+      <div class="empty-title">All Done</div>
+      <div class="empty-sub">You reviewed all words in this session.</div>
+      <button class="btn btn-p" style="width:auto;padding:12px 24px; margin-top:12px;" onclick="nav('home')">Back to Home</button>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="pg-account">
+<div class="acc-top">
+    <button class="profile-avatar-btn" type="button" onclick="openProfileModal()" aria-label="Edit profile avatar">
+      <div class="avatar-img" id="avIcon"></div>
+      <div class="avatar-edit-badge" aria-hidden="true">+</div>
+    </button>
+    <div class="acc-name" id="accName">User</div>
+</div>
+<div class="sec-lbl">Settings</div>
+  <div class="menu-sec">
+    <div class="mr" onclick="openProfileModal()"><div class="ml">Edit Profile</div><div class="ma"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div></div>
+    <div class="mr" onclick="openVoiceModal()"><div class="ml">Voice Settings</div><div class="ma"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div></div>
+  </div>
+  <div class="settings-card">
+    <div class="settings-card-title">Data Management</div>
+    <div class="action-row">
+      <button class="btn btn-s" onclick="triggerImport(null)" style="padding: 10px 14px; font-size: 13px; flex:1;">Import CSV</button>
+      <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleImport(event)">
+      <button class="btn btn-s" onclick="exportCSV(null)" style="padding: 10px 14px; font-size: 13px; flex:1;">Export CSV</button>
+    </div>
+    <div class="format-label"><span style="font-weight:700; color:var(--ink);">CSV Format:</span><br>Word, Type, Pronunciation, Meaning, Example, Notes</div>
+    <div class="settings-card-title" style="margin-top:20px;">JSON Backup</div>
+    <div class="action-row">
+      <button class="btn btn-s" onclick="document.getElementById('jsonInput').click()" style="padding: 10px 14px; font-size: 13px; flex:1;">Import JSON</button>
+      <input type="file" id="jsonInput" accept=".json,application/json" style="display:none" onchange="handleJSONImport(event)">
+      <button class="btn btn-s" onclick="exportJSONBackup()" style="padding: 10px 14px; font-size: 13px; flex:1;">Export JSON</button>
+    </div>
+    <div class="format-label"><span style="font-weight:700; color:var(--ink);">Local-first backup:</span><br>Exports the full WordJar data object including words, decks, profile, study history, and settings.</div>
+  </div>
+  <div class="settings-card" id="cloudSyncPanel">
+  <div class="settings-card-title">Cloud Backup Sync</div>
+  <div id="cloudStatus" class="sync-status warn">Not signed in. Sign in to use cloud backup.</div>
+
+  <div id="cloudSignedOutActions" class="action-row">
+    <button class="btn btn-p btn-full" onclick="signInCloud()">Sign In with Google</button>
+  </div>
+
+  <div id="cloudSignedInActions" style="display:none;">
+    <div class="action-row">
+      <button class="btn btn-p" style="flex:1;" onclick="saveCloudBackup()">Save to Cloud</button>
+      <button class="btn btn-s" style="flex:1;" onclick="loadCloudBackup()">Load from Cloud</button>
+    </div>
+    <button class="btn btn-s btn-full" onclick="signOutCloud()">Sign Out</button>
+    <div class="format-label" style="margin-top:12px;">
+      Save uploads this device's current data. Load replaces local data with the cloud backup.
+    </div>
+  </div>
+</div>
+  <button class="btn btn-s btn-full" style="color:var(--anki-again); border-color:#fca5a5; background:#fef2f2; margin: 0 20px; width: calc(100% - 40px); padding: 14px; font-size: 14px;" onclick="clearAll()">Clear All Data</button>
+</div>
+
+<div class="overlay" id="deckModal">
+  <div class="modal-card deck-form-modal">
+    <div class="modal-header deck-modal-header">
+      <div>
+        <div class="sh-title" id="dmTitle">New Deck</div>
+        <div class="modal-subtitle">Customize this deck’s name, details, and color.</div>
+      </div>
+
+      <button class="btn-close soft-close" onclick="closeO('deckModal')" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="fg deck-field">
+      <label class="fl">Name *</label>
+      <input class="fi" id="dName" type="text" placeholder="Deck Name">
+    </div>
+
+    <div class="fg deck-field">
+      <label class="fl">Description</label>
+      <textarea class="fi" id="dDesc" rows="2" placeholder="Optional description"></textarea>
+    </div>
+
+    <div class="fg deck-field">
+      <label class="fl">Color</label>
+      <div class="color-picker-row deck-color-row">
+        <div class="csw sel" data-c="#09090b" style="background:#09090b;" onclick="selDC('#09090b')"></div>
+        <div class="csw" data-c="#f59e0b" style="background:#f59e0b;" onclick="selDC('#f59e0b')"></div>
+        <div class="csw" data-c="#3b82f6" style="background:#3b82f6;" onclick="selDC('#3b82f6')"></div>
+        <div class="csw" data-c="#ef4444" style="background:#ef4444;" onclick="selDC('#ef4444')"></div>
+        <div class="csw" data-c="#10b981" style="background:#10b981;" onclick="selDC('#10b981')"></div>
+
+        <div class="custom-color-btn" id="customColorWrapper" title="Custom color">
+          <input type="color" id="customColorPicker" onchange="selDC(this.value)">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row deck-modal-footer">
+      <button class="btn btn-s deck-cancel-btn" onclick="closeO('deckModal')">Cancel</button>
+      <button class="btn btn-p deck-save-btn" onclick="saveDeck()">Save Deck</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="deckMenuModal" onclick="closeO('deckMenuModal')">
+  <div class="modal-card deck-options-card" onclick="event.stopPropagation()">
+    <div class="deck-options-header">
+      <div>
+        <div class="deck-options-title">Deck Options</div>
+        <div class="deck-options-subtitle">Manage this deck and its cards.</div>
+      </div>
+
+      <button class="deck-options-close" onclick="closeO('deckMenuModal')" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="deck-options-list">
+      <button class="deck-options-btn" type="button" onclick="handleDeckMenu('rename')">Edit Details</button>
+      <button class="deck-options-btn" type="button" onclick="handleDeckMenu('manage')">Manage Cards</button>
+      <button class="deck-options-btn" type="button" onclick="handleDeckMenu('import')">Import CSV</button>
+      <button class="deck-options-btn" type="button" onclick="handleDeckMenu('export')">Export CSV</button>
+    </div>
+
+    <div class="deck-options-divider"></div>
+
+    <button class="deck-options-btn deck-options-danger" type="button" onclick="handleDeckMenu('delete')">Delete Deck</button>
+  </div>
+</div>
+  
+<div class="overlay" id="deckOptionsModal">
+  <div class="modal-card" style="background:var(--sur2); padding:16px;">
+    <div class="modal-header" style="margin-bottom:12px;">
+      <div class="sh-title" id="optDeckTitle" style="font-size:18px;">Learning Settings</div>
+      <button class="btn-close" onclick="closeO('deckOptionsModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    
+    <div class="settings-card" style="margin:0 0 12px 0; padding:16px; background:#fff; border-radius: 12px;">
+      <div style="font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom:12px;">Daily Limits</div>
+      <div class="opt-row" style="flex-direction:column; align-items:stretch; border:none; padding:6px 0;">
+        <div class="opt-label" style="margin-bottom:6px;">New cards/day</div>
+        <input type="number" class="fi" id="optNewPerDay" value="25">
+      </div>
+      <div class="opt-row" style="flex-direction:column; align-items:stretch; border:none; padding:6px 0;">
+        <div class="opt-label" style="margin-bottom:6px;">Maximum reviews/day</div>
+        <input type="number" class="fi" id="optRevPerDay" value="999">
+      </div>
+      <div class="opt-row" style="padding:12px 0 6px; justify-content: space-between; border-bottom: 1px solid var(--bdr);">
+        <div class="opt-label">New cards ignore review limit</div>
+        <label class="switch"><input type="checkbox" id="optIgnoreRev"><span class="slider"></span></label>
+      </div>
+      <div class="opt-row" style="padding:12px 0 0; justify-content: space-between; border:none;">
+        <div class="opt-label">Limits start from top</div>
+        <label class="switch"><input type="checkbox" id="optLimitsTop"><span class="slider"></span></label>
+      </div>
+    </div>
+    
+    <div class="settings-card" style="margin:0 0 12px 0; padding:16px; background:#fff; border-radius: 12px;">
+      <div style="font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom:12px;">New Cards</div>
+      <div class="opt-row" style="flex-direction:column; align-items:stretch; border:none; padding:6px 0;">
+        <div class="opt-label" style="margin-bottom:6px;">Learning steps</div>
+        <input type="text" class="fi" id="optLearnSteps" value="1m 10m">
+      </div>
+      <div class="opt-row" style="flex-direction:column; align-items:stretch; border:none; padding:6px 0;">
+        <div class="opt-label" style="margin-bottom:6px;">Insertion order</div>
+        <select class="fi" id="optOrder">
+          <option value="seq">Sequential (oldest first)</option>
+          <option value="rand">Random</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="settings-card" style="margin:0 0 12px 0; padding:16px; background:#fff; border-radius: 12px;">
+      <div style="font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom:12px;">Lapses</div>
+      <div class="opt-row" style="flex-direction:column; align-items:stretch; border:none; padding:6px 0;">
+        <div class="opt-label" style="margin-bottom:6px;">Relearning steps</div>
+        <input type="text" class="fi" id="optReLearnSteps" value="10m">
+      </div>
+      <div class="opt-row" style="flex-direction:column; align-items:stretch; border:none; padding:6px 0;">
+        <div class="opt-label" style="margin-bottom:6px;">Leech threshold</div>
+        <input type="number" class="fi" id="optLeechThresh" value="8">
+      </div>
+      <div class="opt-row" style="flex-direction:column; align-items:stretch; border:none; padding:6px 0;">
+        <div class="opt-label" style="margin-bottom:6px;">Leech action</div>
+        <select class="fi" id="optLeechAction">
+          <option value="tag">Tag Only</option>
+          <option value="suspend">Suspend Card</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="form-row" style="margin-top: 12px;">
+      <button class="btn btn-s" style="flex:1" onclick="closeO('deckOptionsModal')">Cancel</button>
+      <button class="btn btn-p" style="flex:2" onclick="saveDeckOptions()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="profileModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="sh-title">Edit Profile</div>
+      <button class="btn-close" onclick="closeO('profileModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+
+    <div class="fg">
+      <label class="fl">Display Name</label>
+      <input class="fi" id="pName" type="text" placeholder="Enter your name">
+    </div>
+
+    <div class="fg">
+      <label class="fl">Avatar</label>
+      <div class="avatar-picker-head" id="avatarPickerHead"></div>
+      <div class="avatar-grid" id="avatarGrid"></div>
+    </div>
+
+    <div class="form-row" style="margin-top: 32px;">
+      <button class="btn btn-s" style="flex:1" onclick="closeO('profileModal')">Cancel</button>
+      <button class="btn btn-p" style="flex:2" onclick="saveProfile()">Save Profile</button>  </div>
+  </div>
+</div>
+
+<div class="overlay" id="voiceModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="sh-title">Voice Settings</div>
+      <button class="btn-close" onclick="closeO('voiceModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+      <div class="fg">
+        <label class="fl">Voice Accent</label>
+        <select class="fi" id="vAccent">
+          <option value="en-US">American (US)</option>
+          <option value="en-GB">British (UK)</option>
+          <option value="en-AU">Australian (AU)</option>
+          <option value="en-IN">Indian (IN)</option>
+        </select>
+      </div>
+      
+      <div class="fg">
+        <label class="fl">Reading Speed</label>
+        <select class="fi" id="vSpeed">
+          <option value="0.75">Slow (0.75x)</option>
+          <option value="0.95">Normal (1x)</option>
+          <option value="1.25">Fast (1.25x)</option>
+        </select>
+      </div>
+      
+      <div class="fg">
+        <label class="fl">Auto Fill IPA Accent</label>
+        <select class="fi" id="vIpaAccent">
+          <option value="us">US IPA first</option>
+          <option value="uk">UK IPA first</option>
+          <option value="any">Any available IPA</option>
+        </select>
+      </div>    
+    <div class="fg" style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; padding-top:20px; border-top:1px solid var(--bdr);">
+      <div><div style="font-size:14px; font-weight:600; color:var(--ink); margin-bottom:4px;">Auto-play Audio</div><div style="font-size:12px; color:var(--ink2); line-height:1.4;">Play sound automatically</div></div>
+      <label class="switch"><input type="checkbox" id="vAutoPlay"><span class="slider"></span></label>
+    </div>
+    <div class="form-row" style="margin-top: 32px;">
+      <button class="btn btn-s" style="flex:1" onclick="closeO('voiceModal')">Cancel</button>
+      <button class="btn btn-p" style="flex:2" onclick="saveVoiceSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="wordModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="sh-title" id="wmTitle">Add New Word</div>
+      <button class="btn-close" onclick="closeO('wordModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+<div class="fg">
+  <label class="fl">Word *</label>
+  <input class="fi" id="fWord" type="text" placeholder="Enter the word">
+</div>
+
+<div class="auto-fill-box">
+  <div class="auto-fill-row">
+    <button class="btn btn-s" type="button" onclick="autoFillWord()">Auto Fill</button>
+    <div class="auto-fill-hint">Fill meaning, type, pronunciation, and example from the word.</div>
+  </div>
+  <div class="auto-fill-status" id="autoFillStatus"></div>
+</div>
+
+<div class="fg">
+  <label class="fl">Category (Deck)</label>
+  <select class="fi" id="fDeck" style="cursor:pointer"></select>
+</div>    <div class="fg"><label class="fl">Meaning *</label><textarea class="fi" id="fMeaning" rows="2" placeholder="Enter the meaning or definition"></textarea></div>
+    <div class="fg"><label class="fl">Example Sentence</label><textarea class="fi" id="fEx" rows="2" placeholder="Enter an example sentence"></textarea></div>
+    <div class="fg"><label class="fl">Pronunciation</label><input class="fi" id="fPron" type="text" placeholder="e.g. /ˌser.ənˈdɪp.ə.ti/"></div>
+    <div class="fg"><label class="fl">Type</label><div class="type-pills" id="typePills"><button class="tp" data-t="N" onclick="selT(this)">N</button><button class="tp" data-t="V" onclick="selT(this)">V</button><button class="tp" data-t="ADJ" onclick="selT(this)">ADJ</button><button class="tp" data-t="ADV" onclick="selT(this)">ADV</button><button class="tp" data-t="ART" onclick="selT(this)">ART</button><button class="tp" data-t="PRON" onclick="selT(this)">PRON</button><button class="tp" data-t="PHR" onclick="selT(this)">PHR</button><button class="tp" data-t="IDM" onclick="selT(this)">IDM</button></div></div>
+    <div class="fg"><label class="fl">Notes</label><textarea class="fi" id="fNotes" rows="2" placeholder="Add a note..."></textarea></div>
+    <div class="form-row" style="margin-top: 32px;">
+      <button class="btn btn-d" id="wDel" style="display:none;flex:1" onclick="deleteWord()">Delete</button>
+      <button class="btn btn-s" style="flex:1" onclick="closeO('wordModal')">Cancel</button>
+      <button class="btn btn-p" style="flex:2" onclick="saveWord()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="detailModal">
+  <div class="modal-card">
+    <div class="modal-header detail-modal-header" style="margin-bottom:16px;">
+      <div class="tag-row" id="dtTypeWrap" style="margin-top:0; margin-bottom:0; justify-content:flex-start;"></div>
+      <div class="detail-top-actions">
+        <button class="detail-share-btn" type="button" onclick="event.stopPropagation(); openShareAdjustModal()" aria-label="Share word card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 15V3"></path>
+            <path d="M7 8l5-5 5 5"></path>
+            <path d="M5 14v4a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-4"></path>
+          </svg>
+        </button>
+      
+        <button class="btn-close" onclick="closeO('detailModal')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px"><div style="font-size:32px; font-weight:700; color:var(--ink); letter-spacing:-0.5px;" id="dtWord"></div><button class="ib" id="dtPlayBtn" style="border-radius:50%; width:36px; height:36px; background:var(--sur2); color:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button></div>
+    <div style="font-size:14px;color:var(--ink3);margin-bottom:24px" id="dtPron"></div>
+    <div class="dt-sm2" id="dtSm2" style="display:flex;gap:16px;margin-bottom:24px;"></div>
+    <div style="margin-bottom:20px"><div class="ans-label">Meaning</div><div style="font-size:16px;line-height:1.5;color:var(--ink2);" id="dtMeaning"></div></div>
+    <div id="dtExSec" style="display:none;margin-bottom:20px"><div class="ans-label">Example</div><div style="font-style:italic;color:var(--ink2);background:var(--sur2);padding:14px;border-radius:12px;font-size:15px;display:flex;align-items:flex-start;gap:12px;"><span id="dtEx" style="flex:1"></span><button class="ib" id="dtExTts" style="background:#fff; flex-shrink:0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button></div></div>
+    <div id="dtNtSec" style="display:none;margin-bottom:20px"><div class="ans-label">Notes</div><div style="background:var(--sur2);padding:14px;border-radius:12px;font-size:14px;color:var(--ink2);" id="dtNotes"></div></div>
+    <div class="form-row detail-actions" style="margin-top:32px;">
+      <button class="btn btn-s" style="flex:1" onclick="closeO('detailModal')">Close</button>
+      <button class="btn btn-s" style="flex:1; border-color:var(--ink); color:var(--ink);" onclick="editFromDetail()">Edit</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="moveCardsModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="sh-title">Move Cards</div>
+      <button class="btn-close" onclick="closeO('moveCardsModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="fg">
+      <label class="fl">Destination Deck</label>
+      <select class="fi" id="moveDestDeck"></select>
+    </div>
+    <div class="form-row">
+      <button class="btn btn-p btn-full" onclick="moveSelectedCards()">Confirm Move</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="wordFilterModal">
+  <div class="modal-card clean-filter-modal">
+    <div class="modal-header clean-filter-header">
+      <div class="sh-title">Dictionary Filters</div>
+      <button class="btn-close" onclick="closeO('wordFilterModal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="clean-filter-body">
+      <div class="filter-card">
+        <div class="filter-card-title">WORD TYPE</div>
+
+        <button class="filter-row-clean" type="button" onclick="setWordTypeFilter('')">
+          <span class="mini-check" id="filterTypeAllBox"></span>
+          <span class="filter-code">•</span>
+          <span class="filter-label">All types</span>
+        </button>
+
+        <button class="filter-row-clean" type="button" onclick="setWordTypeFilter('N')">
+          <span class="mini-check" id="filterTypeNBox"></span>
+          <span class="filter-code">N</span>
+          <span class="filter-label">Noun</span>
+        </button>
+
+        <button class="filter-row-clean" type="button" onclick="setWordTypeFilter('V')">
+          <span class="mini-check" id="filterTypeVBox"></span>
+          <span class="filter-code">V</span>
+          <span class="filter-label">Verb</span>
+        </button>
+
+        <button class="filter-row-clean" type="button" onclick="setWordTypeFilter('ADJ')">
+          <span class="mini-check" id="filterTypeADJBox"></span>
+          <span class="filter-code">ADJ</span>
+          <span class="filter-label">Adjective</span>
+        </button>
+
+        <button class="filter-row-clean" type="button" onclick="setWordTypeFilter('ADV')">
+          <span class="mini-check" id="filterTypeADVBox"></span>
+          <span class="filter-code">ADV</span>
+          <span class="filter-label">Adverb</span>
+        </button>
+
+        <button class="filter-row-clean" type="button" onclick="setWordTypeFilter('ART')">
+          <span class="mini-check" id="filterTypeARTBox"></span>
+          <span class="filter-code">ART</span>
+          <span class="filter-label">Article</span>
+        </button>
+
+        <button class="filter-row-clean" type="button" onclick="setWordTypeFilter('PRON')">
+          <span class="mini-check" id="filterTypePRONBox"></span>
+          <span class="filter-code">PRON</span>
+          <span class="filter-label">Pronoun</span>
+        </button>
+
+        <button class="filter-row-clean" type="button" onclick="setWordTypeFilter('PHR')">
+          <span class="mini-check" id="filterTypePHRBox"></span>
+          <span class="filter-code">PHR</span>
+          <span class="filter-label">Phrase</span>
+        </button>
+
+        <button class="filter-row-clean" type="button" onclick="setWordTypeFilter('IDM')">
+          <span class="mini-check" id="filterTypeIDMBox"></span>
+          <span class="filter-code">IDM</span>
+          <span class="filter-label">Idiom</span>
+        </button>
+      </div>
+
+      <div class="filter-card">
+        <div class="filter-card-title">OPTIONS</div>
+
+        <button class="filter-row-clean" type="button" onclick="toggleWordStarFilter()">
+          <span class="mini-check" id="filterStarBox"></span>
+          <span class="filter-code">★</span>
+          <span class="filter-label">Starred only</span>
+        </button>
+      </div>
+
+      <div class="filter-card">
+        <div class="filter-card-title">LANGUAGE</div>
+
+        <button class="filter-row-clean" type="button" onclick="setWordLangFilter('all')">
+          <span class="mini-check" id="filterLangAllBox"></span>
+          <span class="filter-code">A</span>
+          <span class="filter-label">All languages</span>
+        </button>
+
+        <button class="filter-row-clean" type="button" onclick="setWordLangFilter('en')">
+          <span class="mini-check" id="filterLangEnBox"></span>
+          <span class="filter-code">A</span>
+          <span class="filter-label">English</span>
+        </button>
+
+        <button class="filter-row-clean" type="button" onclick="setWordLangFilter('ja')">
+          <span class="mini-check" id="filterLangJaBox"></span>
+          <span class="filter-code">あ</span>
+          <span class="filter-label">Japanese</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="clean-filter-actions">
+      <button class="btn btn-s" onclick="resetWordFilters()">Reset</button>
+      <button class="btn btn-p" onclick="closeO('wordFilterModal')">Done</button>
+    </div>
+  </div>
+</div>
+  
+<div id="shareCardStage" aria-hidden="true">
+  <div id="shareCard" class="share-theme-light">
+    <div class="share-card-head" id="shareCardHead">
+      <div class="share-card-type" id="shareCardType">N</div>
+
+      <div class="share-card-logo-badge" id="shareCardLogoBadge">
+        <img src="assets/brand/logo.png" alt="WordJar logo" onerror="this.style.display='none'">
+        <span class="share-card-logo-text">WordJar</span>
+      </div>
+    </div>
+
+    <div class="share-card-word-row">
+      <div class="share-card-word" id="shareCardWord">Morning</div>
+    </div>
+
+    <div class="share-card-pron" id="shareCardPron">/ˈmɔːnɪŋ/</div>
+
+    <div class="share-card-stats" id="shareCardStats">
+      <div><b>1d</b><span>Interval</span></div>
+      <div><b>2.5</b><span>Ease</span></div>
+      <div><b>0</b><span>Reps</span></div>
+    </div>
+
+    <div class="share-card-section" id="shareCardMeaningWrap">
+      <div class="share-card-label">Meaning</div>
+      <div class="share-card-text" id="shareCardMeaning">The part of the day from dawn to noon.</div>
+    </div>
+
+    <div class="share-card-section" id="shareCardExampleWrap">
+      <div class="share-card-label">Example</div>
+      <div class="share-card-box" id="shareCardExample">“I’ll see you tomorrow morning.”</div>
+    </div>
+
+    <div class="share-card-section" id="shareCardNotesWrap">
+      <div class="share-card-label">Notes</div>
+      <div class="share-card-box" id="shareCardNotes">Auto-filled from dictionary.</div>
+    </div>
+
+    <div class="share-card-foot" id="shareCardFoot">
+      <span class="share-card-foot-pill" id="shareCardDeck">General</span>
+      <span class="share-card-foot-pill" id="shareCardWatermark">wordjar</span>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="shareAdjustModal">
+  <div class="modal-card share-adjust-modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="sh-title">Share Card</div>
+      <button class="btn-close" onclick="closeO('shareAdjustModal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="share-preview-box">
+      <div class="share-preview-title">Preview</div>
+      <div id="sharePreviewMount"></div>
+    </div>
+
+    <button class="share-options-toggle" type="button" onclick="toggleShareOptionsPanel()">
+      <span>Customize card</span>
+      <span id="shareOptionsChevron">⌄</span>
+    </button>
+
+    <div class="share-options-panel" id="shareOptionsPanel">
+      <div class="share-adjust-note">
+        Choose what appears on the exported card. The preview above updates before saving.
+      </div>
+
+      <div class="share-adjust-section">
+        <div class="share-adjust-title">Theme</div>
+        <div class="share-theme-row">
+          <button class="share-theme-chip" id="shareThemeLight" type="button" onclick="selectShareTheme('light')">Light</button>
+          <button class="share-theme-chip" id="shareThemeDark" type="button" onclick="selectShareTheme('dark')">Dark</button>
+        </div>
+      </div>
+
+      <div class="share-adjust-section">
+        <div class="share-adjust-title">Card content</div>
+
+        <label class="share-check-row">Type
+          <input type="checkbox" id="shareOptType" onchange="updateSharePreview()">
+        </label>
+
+        <label class="share-check-row">Pronunciation
+          <input type="checkbox" id="shareOptPron" onchange="updateSharePreview()">
+        </label>
+
+        <label class="share-check-row">Stats
+          <input type="checkbox" id="shareOptStats" onchange="updateSharePreview()">
+        </label>
+
+        <label class="share-check-row">Meaning
+          <input type="checkbox" id="shareOptMeaning" onchange="updateSharePreview()">
+        </label>
+
+        <label class="share-check-row">Example
+          <input type="checkbox" id="shareOptExample" onchange="updateSharePreview()">
+        </label>
+
+        <label class="share-check-row">Notes
+          <input type="checkbox" id="shareOptNotes" onchange="updateSharePreview()">
+        </label>
+      </div>
+
+      <div class="share-adjust-section">
+        <div class="share-adjust-title">Footer</div>
+
+        <label class="share-check-row">Deck
+          <input type="checkbox" id="shareOptDeck" onchange="updateSharePreview()">
+        </label>
+
+        <label class="share-check-row">Watermark
+          <input type="checkbox" id="shareOptWatermark" onchange="updateSharePreview()">
+        </label>
+
+        <label class="share-check-row">App logo
+          <input type="checkbox" id="shareOptLogo" onchange="updateSharePreview()">
+        </label>
+      </div>
+    </div>
+
+    <div class="form-row" style="margin-top:16px;">
+      <button class="btn btn-s" style="flex:1" onclick="closeO('shareAdjustModal')">Cancel</button>
+      <button class="btn btn-p" style="flex:2" onclick="shareAdjustedDetailWord()">Save / Share</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+ 
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/autofill.js"></script>
+<script src="js/share-card.js"></script>
+<script src="js/firebase-sync.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

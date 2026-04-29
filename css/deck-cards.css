@@ -1,0 +1,12 @@
+/* Deck Cards page specific rules */
+
+/* The deck card management page should focus on opening/selecting cards.
+   Sharing remains available from the card detail/share flow, not from this list. */
+#pg-deck-cards .deck-card-selectable .wr-right,
+#pg-deck-cards .deck-card-selectable .wr-actions {
+  display: none !important;
+}
+
+#pg-deck-cards .deck-card-selectable .wm {
+  padding-right: 0;
+}

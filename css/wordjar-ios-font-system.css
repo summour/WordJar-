@@ -1,0 +1,308 @@
+/* WordJar iOS font system
+   Final visual typography layer. Scoped to .app only, no global reset. */
+
+.app {
+  --wordjar-ios-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --wordjar-body-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
+  --wordjar-ui-size: clamp(0.875rem, 0.84rem + 0.15vw, 0.9375rem);
+  --wordjar-title-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --wordjar-large-title-size: clamp(1.5rem, 1.25rem + 1vw, 1.875rem);
+  --wordjar-display-size: clamp(2rem, 1.45rem + 2vw, 3rem);
+  --wordjar-meta-size: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --wordjar-small-size: clamp(0.75rem, 0.72rem + 0.12vw, 0.8125rem);
+  --wordjar-micro-size: clamp(0.6875rem, 0.66rem + 0.1vw, 0.75rem);
+  --wordjar-body-weight: 450;
+  --wordjar-meta-weight: 500;
+  --wordjar-ui-weight: 600;
+  --wordjar-label-weight: 650;
+  --wordjar-title-weight: 700;
+  --wordjar-display-weight: 760;
+  --wordjar-heavy-weight: 800;
+
+  font-family: var(--wordjar-ios-font);
+  font-size: var(--wordjar-body-size);
+  font-weight: var(--wordjar-body-weight);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+.app * {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.app button,
+.app input,
+.app textarea,
+.app select {
+  font: inherit;
+  font-family: var(--wordjar-ios-font);
+  font-size: var(--wordjar-ui-size);
+  font-weight: var(--wordjar-ui-weight);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Dashboard / Home */
+.app #pg-home,
+.app #pg-home * {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.app #pg-home .home-hero .home-title,
+.app #pg-home .home-title {
+  font-family: var(--wordjar-ios-font);
+  font-size: var(--wordjar-title-size);
+  font-weight: var(--wordjar-title-weight);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.app #pg-home .plan-card,
+.app #pg-home .plan-card *,
+.app #pg-home .streak-strip,
+.app #pg-home .streak-strip *,
+.app #pg-home .calendar-strip,
+.app #pg-home .calendar-strip * {
+  font-size: var(--wordjar-body-size);
+  font-weight: var(--wordjar-body-weight);
+}
+
+.app #pg-home .psl,
+.app #pg-home .cal-lbl,
+.app #pg-home .ring-sub,
+.app #pg-home .streak-lbl {
+  font-size: var(--wordjar-small-size);
+  font-weight: var(--wordjar-label-weight);
+}
+
+.app #pg-home .ring-pct,
+.app #pg-home .psv,
+.app #pg-home .streak-val,
+.app #pg-home .cal-circle {
+  font-size: var(--wordjar-title-size);
+  font-weight: var(--wordjar-title-weight);
+}
+
+.app #pg-home .home-acts .btn {
+  font-size: var(--wordjar-ui-size);
+  font-weight: var(--wordjar-ui-weight);
+}
+
+/* Display / hero text */
+.app .fc-word-f,
+.app .share-card-word {
+  font-size: var(--wordjar-display-size);
+  font-weight: var(--wordjar-display-weight);
+}
+
+/* Large titles */
+.app .brand,
+.app [data-wordjar-brand],
+.app .wordjar-brand,
+.app .ov-deck-name,
+.app .acc-name,
+.app .empty-title,
+.app .wordjar-mushy-empty-title,
+.app .splash-logo {
+  font-family: var(--wordjar-ios-font);
+  font-size: var(--wordjar-large-title-size);
+  font-weight: var(--wordjar-display-weight);
+  letter-spacing: -0.03em;
+}
+
+/* Section titles */
+.app .home-title,
+.app .ph-title,
+.app .sh-title,
+.app .settings-card-title,
+.app .reader-card-title,
+.app .rn-title,
+.app .rn-detail-title,
+.app .rn-title-input,
+.app .reader-title,
+.app .deck-options-title,
+.app .rn-move-title,
+.app .wordjar-mushy-title,
+.app .fc-word-b,
+.app .l-word,
+.app .wen,
+.app .deck-name,
+.app .share-card-label,
+.app .share-adjust-title {
+  font-family: var(--wordjar-ios-font);
+  font-size: var(--wordjar-title-size);
+  font-weight: var(--wordjar-title-weight);
+  letter-spacing: -0.02em;
+}
+
+/* Standard body text */
+.app,
+.app .page,
+.app .study-page,
+.app .reader-input,
+.app .rn-editor-body,
+.app .rn-detail-body,
+.app .wordjar-mushy-bubble,
+.app .wordjar-mushy-inputbar textarea,
+.app .fc-meaning,
+.app .fc-ex,
+.app .fc-nt,
+.app .share-card-text,
+.app .share-card-box,
+.app .share-check-row,
+.app .share-check-row span,
+.app .share-check-row .label,
+.app .share-check-row .text,
+.app textarea {
+  font-size: var(--wordjar-body-size);
+  font-weight: var(--wordjar-body-weight);
+  line-height: 1.55;
+}
+
+/* Buttons / controls */
+.app .btn,
+.app .btn-p,
+.app .btn-s,
+.app .top-btn,
+.app .back-btn,
+.app .fc-close-btn,
+.app .menu-item,
+.app .deck-options-btn,
+.app .filter-row-clean,
+.app .chip,
+.app .tp,
+.app .tts-action-btn,
+.app .rb,
+.app .rn-tool,
+.app .rn-tab,
+.app .reader-select,
+.app .reader-process-btn,
+.app .rn-move-option,
+.app .rn-move-cancel,
+.app .dict-add-btn,
+.app .star-btn,
+.app .avatar-back-btn,
+.app .share-options-toggle,
+.app .share-theme-chip,
+.app .wordjar-mushy-clear,
+.app .wordjar-mushy-actions button,
+.app .wordjar-mushy-quick button,
+.app .wordjar-mushy-inputbar button {
+  font-size: var(--wordjar-ui-size);
+  font-weight: var(--wordjar-ui-weight);
+}
+
+/* Meta / secondary text */
+.app .ov-desc,
+.app .empty-sub,
+.app .format-label,
+.app .modal-subtitle,
+.app .deck-options-subtitle,
+.app .rn-sub,
+.app .rn-row-meta,
+.app .rn-detail-meta,
+.app .rn-detail-folder,
+.app .rn-row-preview,
+.app .reader-sub,
+.app .reader-meta,
+.app .reader-process-note,
+.app .wpn,
+.app .wth,
+.app .psl,
+.app .sb-lbl,
+.app .share-card-pron,
+.app .share-card-stats span,
+.app .share-adjust-note,
+.app .auto-fill-hint,
+.app .auto-fill-status,
+.app .avatar-picker-title,
+.app .avatar-coming-note,
+.app .wordjar-mushy-subtitle,
+.app .wordjar-mushy-context-text,
+.app .wordjar-mushy-empty-sub,
+.app .wordjar-mushy-meta {
+  font-size: var(--wordjar-meta-size);
+  font-weight: var(--wordjar-meta-weight);
+}
+
+/* Small labels / badges */
+.app .cal-lbl,
+.app .ring-sub,
+.app .tt,
+.app .d-stat,
+.app .d-stat b,
+.app .ans-label,
+.app .rs,
+.app .dict-filter-summary,
+.app .share-preview-title,
+.app .share-card-foot-pill,
+.app #shareCardDeck,
+.app #shareCardWatermark,
+.app .wordjar-mushy-context-label,
+.app .wordjar-mushy-context button,
+.app .wordjar-mushy-actions button,
+.app .wordjar-mushy-meta {
+  font-size: var(--wordjar-small-size);
+  font-weight: var(--wordjar-label-weight);
+}
+
+/* Tiny utility text */
+.app .rn-row-count,
+.app .reader-help,
+.app .card-hint,
+.app .fc-hint-f {
+  font-size: var(--wordjar-micro-size);
+  font-weight: var(--wordjar-meta-weight);
+}
+
+/* Numeric text stays proportional but uses same scale buckets */
+.app .ring-pct,
+.app .psv,
+.app .sb-val,
+.app .sb-tot,
+.app .streak-val,
+.app .share-card-stats b {
+  font-size: var(--wordjar-title-size);
+  font-weight: var(--wordjar-title-weight);
+}
+
+/* Strong / heavy text */
+.app strong,
+.app b,
+.app .share-card-type,
+.app .share-card-logo-badge,
+.app .share-syn-pill,
+.app #shareCardSynonyms .share-syn-pill {
+  font-weight: var(--wordjar-heavy-weight);
+}
+
+/* Reader page cleanup requested: keep Notes + Clear, remove Save and Format Novel here only. */
+.app #pg-reader #readerTopActions button[onclick='saveReaderNote()'],
+.app #pg-reader #readerNovelActions,
+.app #pg-reader #readerFormatNovelBtn {
+  display: none;
+}
+
+.app #pg-reader .reader-head {
+  align-items: flex-start;
+}
+
+.app #pg-reader .reader-top-actions {
+  gap: 8px;
+}
+
+@media (max-width: 430px) {
+  .app {
+    --wordjar-body-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1rem);
+    --wordjar-ui-size: clamp(0.875rem, 0.84rem + 0.15vw, 0.9375rem);
+    --wordjar-title-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
+    --wordjar-large-title-size: clamp(1.375rem, 1.2rem + 0.8vw, 1.625rem);
+    --wordjar-display-size: clamp(1.875rem, 1.4rem + 1.8vw, 2.5rem);
+    --wordjar-meta-size: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  }
+}

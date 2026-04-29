@@ -1,0 +1,153 @@
+/* WordJar responsive web layer
+   Desktop expands like a web app, mobile stays full-screen and touch-friendly. */
+
+.app .main-header,
+.app .page > .ph,
+.app .home-hero,
+.app .home-acts,
+.app .search-row,
+.app .filter-row,
+.app .word-list,
+.app .deck-grid,
+.app .calendar-strip,
+.app .plan-card,
+.app .streak-strip,
+.app .settings-card,
+.app .menu-sec,
+.app .sec-lbl,
+.app .acc-top {
+  width: min(100%, var(--wordjar-content-max));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.app .main-header {
+  width: 100%;
+  max-width: none;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+
+.app .page > .ph,
+.app .home-hero,
+.app .home-acts,
+.app .search-row,
+.app .filter-row,
+.app .word-list,
+.app .deck-grid,
+.app .calendar-strip,
+.app .acc-top {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.app .plan-card,
+.app .streak-strip,
+.app .settings-card,
+.app .menu-sec {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.app .modal-card {
+  width: min(100%, 440px);
+}
+
+.app .overlay {
+  padding: max(20px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) max(20px, env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+}
+
+@media (min-width: 701px) {
+  .app .deck-grid,
+  .app .word-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .app .word-list .empty,
+  .app .deck-grid .empty {
+    grid-column: 1 / -1;
+  }
+
+  .app .plan-card {
+    max-width: min(100% - 48px, var(--wordjar-content-max));
+  }
+
+  .app .streak-strip {
+    max-width: min(100% - 48px, var(--wordjar-content-max));
+  }
+
+  .app .home-acts {
+    max-width: min(100%, var(--wordjar-content-max));
+  }
+
+  .app .fc-scene,
+  .app .fc-action-area,
+  .app .overview-hero,
+  .app .stats-box {
+    width: min(100% - 48px, 760px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .app .topbar,
+  .app .fc-topbar {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+@media (max-width: 700px) {
+  .app .main-header {
+    padding-top: max(12px, env(safe-area-inset-top, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  .app .page > .ph,
+  .app .home-hero,
+  .app .home-acts,
+  .app .search-row,
+  .app .filter-row,
+  .app .word-list,
+  .app .deck-grid,
+  .app .calendar-strip,
+  .app .acc-top {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .app .plan-card,
+  .app .streak-strip,
+  .app .settings-card,
+  .app .menu-sec {
+    width: calc(100% - 40px);
+  }
+
+  .app .home-acts {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 380px) {
+  .app .page > .ph,
+  .app .home-hero,
+  .app .home-acts,
+  .app .search-row,
+  .app .filter-row,
+  .app .word-list,
+  .app .deck-grid,
+  .app .calendar-strip,
+  .app .acc-top {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .app .plan-card,
+  .app .streak-strip,
+  .app .settings-card,
+  .app .menu-sec {
+    width: calc(100% - 32px);
+  }
+}

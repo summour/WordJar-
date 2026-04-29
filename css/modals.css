@@ -1,0 +1,197 @@
+/* ═══════════════════════════════════════════
+   MODALS — Deck Form · Deck Options · Filter
+   ═══════════════════════════════════════════ */
+
+/* ── Deck Form Modal ── */
+#deckModal.overlay {
+  background: rgba(9, 9, 11, 0.46);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 18px;
+}
+
+.deck-form-modal {
+  max-width: 380px;
+  padding: 24px;
+  border-radius: 26px;
+  background: var(--sur);
+  border: 1px solid rgba(228, 228, 231, 0.95);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255,255,255,0.8) inset;
+}
+
+.deck-modal-header { align-items: flex-start; margin-bottom: 22px; }
+.deck-modal-header .sh-title { font-size: 24px; line-height: 1.1; font-weight: 800; letter-spacing: -0.8px; }
+.modal-subtitle { margin-top: 6px; font-size: 12px; line-height: 1.45; color: var(--ink3); font-weight: 600; }
+
+/* Soft close button */
+.soft-close {
+  width: 36px; height: 36px;
+  margin-right: -6px; margin-top: -4px;
+  border-radius: 12px;
+  background: var(--sur2);
+  color: var(--ink3);
+}
+.soft-close:hover { background: var(--bdr); color: var(--ink); }
+.soft-close svg   { width: 20px; height: 20px; stroke-width: 2.3; }
+
+/* Form fields */
+.deck-field               { margin-bottom: 18px; }
+.deck-field .fl           { margin-bottom: 8px; font-size: 13px; font-weight: 800; color: var(--ink); letter-spacing: -0.1px; }
+.deck-field .fi           { min-height: 52px; border-radius: 16px; background: var(--sur2); border: 1px solid transparent; padding: 14px 16px; font-size: 15px; font-weight: 500; }
+.deck-field textarea.fi   { min-height: 94px; line-height: 1.5; }
+.deck-field .fi:focus     { background: var(--sur); border-color: var(--ink); box-shadow: 0 0 0 4px rgba(9,9,11,0.06); }
+
+/* Color swatch row */
+.deck-color-row           { gap: 14px; padding: 8px 2px 2px; flex-wrap: wrap; }
+.deck-color-row .csw,
+.deck-color-row .custom-color-btn { width: 38px; height: 38px; border-radius: 50%; }
+.deck-color-row .csw      { border: 2px solid transparent; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.deck-color-row .csw.sel  {
+  transform: none;
+  box-shadow: 0 0 0 3px var(--sur), 0 0 0 5px var(--ink), 0 2px 8px rgba(0,0,0,0.10);
+}
+.deck-color-row .custom-color-btn {
+  border: 2px dashed var(--ink3); color: var(--ink3);
+  background: linear-gradient(45deg, transparent 0 45%, rgba(9,9,11,0.10) 45% 55%, transparent 55% 100%);
+}
+.deck-color-row .custom-color-btn.sel {
+  transform: none; border-style: solid; border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--sur), 0 0 0 5px var(--ink);
+}
+
+/* Modal footer */
+.deck-modal-footer     { margin-top: 28px; gap: 12px; }
+.deck-modal-footer .btn{ min-height: 52px; border-radius: 17px; font-size: 15px; font-weight: 800; }
+.deck-cancel-btn       { flex: 1; background: var(--sur); border: 1px solid var(--bdr); }
+.deck-save-btn         { flex: 1.65; }
+
+/* ── Deck Options Modal ── */
+#deckMenuModal.overlay {
+  background: rgba(9, 9, 11, 0.46);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 20px;
+}
+
+#deckMenuModal .deck-options-card {
+  width: 100%;
+  max-width: 360px;
+  padding: 24px;
+  border-radius: 26px;
+  background: var(--sur);
+  border: 1px solid var(--bdr);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
+}
+
+#deckMenuModal .deck-options-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; margin-bottom: 22px;
+}
+#deckMenuModal .deck-options-title    { font-size: 22px; line-height: 1.1; font-weight: 800; letter-spacing: -0.6px; color: var(--ink); }
+#deckMenuModal .deck-options-subtitle { margin-top: 6px; font-size: 13px; line-height: 1.45; font-weight: 500; color: var(--ink2); }
+
+#deckMenuModal .deck-options-close {
+  width: 38px; height: 38px;
+  border: none; border-radius: 14px;
+  background: var(--sur2); color: var(--ink3);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; cursor: pointer; flex-shrink: 0;
+  transition: background .15s, color .15s, transform .08s;
+}
+#deckMenuModal .deck-options-close:hover  { background: #ececef; color: var(--ink); }
+#deckMenuModal .deck-options-close:active { background: var(--bdr); transform: scale(0.96); }
+#deckMenuModal .deck-options-close svg    { width: 21px; height: 21px; stroke-width: 2.4; }
+
+#deckMenuModal .deck-options-list { display: flex; flex-direction: column; gap: 12px; }
+
+#deckMenuModal .deck-options-btn {
+  width: 100%; min-height: 56px;
+  padding: 0 18px; border-radius: 18px;
+  border: 1px solid var(--bdr); background: #fff; color: var(--ink);
+  font-family: inherit; font-size: 15px; font-weight: 700; letter-spacing: -0.2px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  cursor: pointer; -webkit-appearance: none; appearance: none;
+  transition: background .15s, border-color .15s, transform .08s;
+}
+#deckMenuModal .deck-options-btn:hover  { background: #fcfcfc; border-color: var(--bdr2); }
+#deckMenuModal .deck-options-btn:active { background: var(--sur2); border-color: var(--bdr2); transform: scale(0.985); }
+
+#deckMenuModal .deck-options-divider { height: 1px; background: var(--bdr); margin: 16px 0 14px; }
+
+#deckMenuModal .deck-options-danger        { color: #e15249; border-color: #f2b1ad; background: #fff; }
+#deckMenuModal .deck-options-danger:hover  { background: #fffafa; border-color: #eb9d97; }
+#deckMenuModal .deck-options-danger:active { background: #fef2f2; border-color: #eb9d97; }
+
+/* ── Filter Modal ── */
+#wordFilterModal {
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+#wordFilterModal .clean-filter-modal {
+  background: #ffffff;
+  width: 100%; max-width: 390px; max-height: 86vh;
+  padding: 0; border-radius: 26px;
+  border: 1px solid var(--bdr);
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+}
+
+.clean-filter-header { padding: 22px 22px 14px; margin-bottom: 0; background: #ffffff; }
+.clean-filter-body   { padding: 0 16px 14px; overflow-y: auto; max-height: calc(86vh - 138px); background: #ffffff; }
+
+/* Filter card group */
+.filter-card { background: #ffffff; border: 1px solid var(--bdr); border-radius: 20px; overflow: hidden; margin-bottom: 14px; }
+.filter-card-title { font-size: 12px; font-weight: 800; color: var(--ink3); letter-spacing: 1px; text-transform: uppercase; padding: 14px 16px 12px; border-bottom: 1px solid var(--sur2); }
+
+/* Filter row */
+.filter-row-clean {
+  width: 100%; min-height: 54px;
+  border: none; border-bottom: 1px solid var(--sur2);
+  background: #ffffff;
+  display: grid; grid-template-columns: 24px 58px 1fr;
+  align-items: center; gap: 12px;
+  padding: 0 16px;
+  font-family: inherit; text-align: left;
+  cursor: pointer;
+}
+.filter-row-clean:last-child  { border-bottom: none; }
+.filter-row-clean:active      { background: var(--sur2); }
+
+/* Checkbox */
+.mini-check {
+  width: 18px; height: 18px;
+  border: 1.5px solid var(--bdr2);
+  border-radius: 6px;
+  background: #ffffff;
+  display: flex; align-items: center; justify-content: center;
+}
+.mini-check.checked { background: var(--ink); border-color: var(--ink); }
+.mini-check.checked::after { content: "✓"; color: #ffffff; font-size: 12px; font-weight: 800; line-height: 1; transform: translateY(-1px); }
+
+.filter-code  { font-size: 13px; font-weight: 800; color: var(--ink3); letter-spacing: 0.2px; }
+.filter-label { font-size: 15px; font-weight: 700; color: var(--ink); }
+
+/* Actions */
+.clean-filter-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 10px;
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: #ffffff;
+  border-top: 1px solid var(--sur2);
+}
+.clean-filter-actions .btn { min-height: 48px; border-radius: 14px; font-size: 14px; }
+
+/* ── Responsive tweaks ── */
+@media (max-width: 380px) {
+  .deck-form-modal,
+  #deckMenuModal .deck-options-card { padding: 20px; border-radius: 24px; }
+  .deck-modal-header .sh-title      { font-size: 22px; }
+  .deck-modal-footer                { gap: 10px; }
+  .deck-color-row                   { gap: 12px; }
+  .deck-color-row .csw,
+  .deck-color-row .custom-color-btn { width: 36px; height: 36px; }
+  #deckMenuModal .deck-options-btn  { min-height: 54px; }
+}

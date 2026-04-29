@@ -1,0 +1,321 @@
+/* WordJar icon background reset
+   Final layer for icon-only controls.
+   Keeps tap areas, removes visible bubble/background/border/shadow everywhere. */
+
+.app :where(
+  .top-btn,
+  .ib,
+  .btn-icon-sq,
+  .back-btn,
+  .btn-close,
+  .soft-close,
+  .fc-close-btn,
+  .deck-options-close,
+  .deck-gear,
+  .star-btn,
+  .dict-add-btn,
+  .icon-btn,
+  .icon-button,
+  .close-btn,
+  .close-button,
+  .share-btn,
+  .more-btn,
+  .menu-btn,
+  .settings-btn,
+  .nav-icon,
+  .round-icon,
+  .circle-icon,
+  button[aria-label='Back'],
+  button[aria-label='Close'],
+  button[aria-label='Share'],
+  button[aria-label='More'],
+  button[aria-label='Menu'],
+  button[aria-label='Settings'],
+  button[aria-label='Undo'],
+  button[aria-label='Redo']
+),
+.app :where(
+  .top-btn:hover,
+  .top-btn:active,
+  .top-btn.active,
+  .ib:hover,
+  .ib:active,
+  .btn-icon-sq:hover,
+  .btn-icon-sq:active,
+  .back-btn:hover,
+  .back-btn:active,
+  .btn-close:hover,
+  .btn-close:active,
+  .soft-close:hover,
+  .soft-close:active,
+  .fc-close-btn:hover,
+  .fc-close-btn:active,
+  .deck-options-close:hover,
+  .deck-options-close:active,
+  .deck-gear:hover,
+  .deck-gear:active,
+  .star-btn:hover,
+  .star-btn:active,
+  .dict-add-btn:hover,
+  .dict-add-btn:active,
+  .icon-btn:hover,
+  .icon-btn:active,
+  .icon-button:hover,
+  .icon-button:active,
+  .close-btn:hover,
+  .close-btn:active,
+  .close-button:hover,
+  .close-button:active,
+  .share-btn:hover,
+  .share-btn:active,
+  .more-btn:hover,
+  .more-btn:active,
+  .menu-btn:hover,
+  .menu-btn:active,
+  .settings-btn:hover,
+  .settings-btn:active,
+  .nav-icon:hover,
+  .nav-icon:active,
+  .round-icon:hover,
+  .round-icon:active,
+  .circle-icon:hover,
+  .circle-icon:active,
+  button[aria-label='Back']:hover,
+  button[aria-label='Back']:active,
+  button[aria-label='Close']:hover,
+  button[aria-label='Close']:active,
+  button[aria-label='Share']:hover,
+  button[aria-label='Share']:active,
+  button[aria-label='More']:hover,
+  button[aria-label='More']:active,
+  button[aria-label='Menu']:hover,
+  button[aria-label='Menu']:active,
+  button[aria-label='Settings']:hover,
+  button[aria-label='Settings']:active,
+  button[aria-label='Undo']:hover,
+  button[aria-label='Undo']:active,
+  button[aria-label='Redo']:hover,
+  button[aria-label='Redo']:active
+) {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--ink);
+}
+
+.app :where(
+  .top-btn,
+  .ib,
+  .btn-icon-sq,
+  .back-btn,
+  .btn-close,
+  .soft-close,
+  .fc-close-btn,
+  .deck-options-close,
+  .deck-gear,
+  .star-btn,
+  .dict-add-btn,
+  .icon-btn,
+  .icon-button,
+  .close-btn,
+  .close-button,
+  .share-btn,
+  .more-btn,
+  .menu-btn,
+  .settings-btn,
+  .nav-icon,
+  .round-icon,
+  .circle-icon
+) svg {
+  stroke: currentColor;
+  fill: none;
+}
+
+.app :where(
+  .top-btn,
+  .ib,
+  .btn-icon-sq,
+  .back-btn,
+  .btn-close,
+  .soft-close,
+  .fc-close-btn,
+  .deck-options-close,
+  .deck-gear,
+  .star-btn,
+  .dict-add-btn,
+  .icon-btn,
+  .icon-button,
+  .close-btn,
+  .close-button,
+  .share-btn,
+  .more-btn,
+  .menu-btn,
+  .settings-btn,
+  .nav-icon,
+  .round-icon,
+  .circle-icon
+):focus-visible {
+  outline: 2px solid rgba(13, 13, 13, 0.18);
+  outline-offset: 2px;
+}
+
+#readerNotesPage.active :where(
+  .rn-icon,
+  .rn-small,
+  .rn-circle,
+  .rn-fab,
+  #rnUndoBtn,
+  #rnRedoBtn
+),
+#readerNotesModal.rn-manager :where(
+  .rn-icon,
+  .rn-small,
+  .rn-circle,
+  .rn-fab,
+  #rnUndoBtn,
+  #rnRedoBtn
+),
+#readerNotesPage.active :where(
+  .rn-icon:hover,
+  .rn-small:hover,
+  .rn-circle:hover,
+  .rn-fab:hover,
+  #rnUndoBtn:hover,
+  #rnRedoBtn:hover,
+  .rn-icon:active,
+  .rn-small:active,
+  .rn-circle:active,
+  .rn-fab:active,
+  #rnUndoBtn:active,
+  #rnRedoBtn:active
+),
+#readerNotesModal.rn-manager :where(
+  .rn-icon:hover,
+  .rn-small:hover,
+  .rn-circle:hover,
+  .rn-fab:hover,
+  #rnUndoBtn:hover,
+  #rnRedoBtn:hover,
+  .rn-icon:active,
+  .rn-small:active,
+  .rn-circle:active,
+  .rn-fab:active,
+  #rnUndoBtn:active,
+  #rnRedoBtn:active
+) {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--ink);
+}
+
+#readerNotesPage.active :where(.rn-tool),
+#readerNotesModal.rn-manager :where(.rn-tool) {
+  box-shadow: none;
+}
+
+/* Detail word modal icon cleanup.
+   Removes the visible circular bubble from the type, sound, share, and close icons
+   without changing the modal z-index, pointer-events, or text/action button styles. */
+#detailModal :where(
+  #dtTypeWrap .tag-pill,
+  #dtPlayBtn,
+  #dtExTts,
+  .btn-close,
+  .btn-icon-sq,
+  .ib,
+  .icon-btn,
+  .icon-button,
+  .share-btn,
+  .close-btn,
+  .close-button,
+  button[aria-label='Close'],
+  button[aria-label='Share'],
+  button[aria-label='Play pronunciation'],
+  button[aria-label='Listen'],
+  button[title='Share']
+),
+#detailModal :where(
+  #dtTypeWrap .tag-pill:hover,
+  #dtPlayBtn:hover,
+  #dtExTts:hover,
+  .btn-close:hover,
+  .btn-icon-sq:hover,
+  .ib:hover,
+  .icon-btn:hover,
+  .icon-button:hover,
+  .share-btn:hover,
+  .close-btn:hover,
+  .close-button:hover,
+  button[aria-label='Close']:hover,
+  button[aria-label='Share']:hover,
+  button[aria-label='Play pronunciation']:hover,
+  button[aria-label='Listen']:hover,
+  button[title='Share']:hover,
+  #dtTypeWrap .tag-pill:active,
+  #dtPlayBtn:active,
+  #dtExTts:active,
+  .btn-close:active,
+  .btn-icon-sq:active,
+  .ib:active,
+  .icon-btn:active,
+  .icon-button:active,
+  .share-btn:active,
+  .close-btn:active,
+  .close-button:active,
+  button[aria-label='Close']:active,
+  button[aria-label='Share']:active,
+  button[aria-label='Play pronunciation']:active,
+  button[aria-label='Listen']:active,
+  button[title='Share']:active
+) {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--ink);
+}
+
+#detailModal :where(
+  #dtTypeWrap .tag-pill,
+  #dtPlayBtn,
+  #dtExTts,
+  .btn-close,
+  .btn-icon-sq,
+  .ib,
+  .icon-btn,
+  .icon-button,
+  .share-btn,
+  .close-btn,
+  .close-button
+)::before,
+#detailModal :where(
+  #dtTypeWrap .tag-pill,
+  #dtPlayBtn,
+  #dtExTts,
+  .btn-close,
+  .btn-icon-sq,
+  .ib,
+  .icon-btn,
+  .icon-button,
+  .share-btn,
+  .close-btn,
+  .close-button
+)::after {
+  content: none;
+  display: none;
+}
+
+#detailModal #dtTypeWrap .tag-pill {
+  min-width: 0;
+  min-height: 0;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+}
+
+#detailModal :where(#dtPlayBtn, #dtExTts, .btn-close, .btn-icon-sq, .ib, .icon-btn, .icon-button, .share-btn, .close-btn, .close-button) svg {
+  stroke: currentColor;
+  fill: none;
+  pointer-events: none;
+}

@@ -1,0 +1,70 @@
+/* WordJar black accent override
+   Turns blue UI text/actions into black while preserving danger colors. */
+
+.app {
+  --brand: #111111;
+  --ac: #111111;
+  --ac-d: #242424;
+  --anki-new: #111111;
+}
+
+.app :where(
+  a,
+  .link,
+  .text-link,
+  .brand-link,
+  .reader-link,
+  .btn-link,
+  .open-reader-btn,
+  .rn-open-reader,
+  .ma,
+  .dict-filter-summary,
+  #btnSelectCards,
+  .fc-s-n,
+  .sb-new
+):not(.danger):not(.btn-d):not(.deck-options-danger):not(.menu-item.danger) {
+  color: #111111;
+}
+
+.app :where(
+  button,
+  .btn,
+  .btn-s,
+  .btn-soft-fill,
+  .top-btn,
+  .chip,
+  .tp,
+  .tts-action-btn,
+  .rn-circle,
+  .rn-fab
+):not(.danger):not(.btn-d):not(.deck-options-danger):not(.menu-item.danger) {
+  --brand: #111111;
+}
+
+.app :where(
+  button[style*='color:var(--anki-new)'],
+  button[style*='color: var(--anki-new)'],
+  button[style*='color:#3b82f6'],
+  button[style*='color: #3b82f6'],
+  button[style*='color:#09090B'],
+  button[style*='color: #09090B']
+):not(.danger):not(.btn-d):not(.deck-options-danger):not(.menu-item.danger) {
+  color: #111111;
+}
+
+.app :where(
+  .btn-s,
+  .btn-soft-fill,
+  .open-reader-btn,
+  .rn-open-reader
+):not(.danger):not(.btn-d):not(.deck-options-danger):not(.menu-item.danger) {
+  color: #111111;
+}
+
+.app :where(svg) {
+  color: currentColor;
+}
+
+.rn-move-check {
+  color: #111111;
+}

@@ -1,0 +1,28 @@
+/* WordJar background tuning
+   Matches requested DevTools values.
+   Final color layer only. */
+
+.app {
+  --wordjar-bg: #fafafa;
+  --bg: #fafafa;
+  background: #fafafa;
+}
+
+.app .page,
+.app .study-page {
+  background: #fafafa;
+}
+
+.app .main-header {
+  background: rgb(250 250 250);
+  border-bottom: 1px solid var(--wordjar-border);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 6px 18px;
+}
+
+@media (max-width: 430px) {
+  .app .main-header {
+    padding: 6px 18px;
+  }
+}

@@ -1,0 +1,8 @@
+/* WordJar App Center Fix
+   Centers the mobile-sized app shell on desktop/wide screens.
+   No z-index or pointer-events changes, so overlays and Reader interactions stay intact. */
+
+body > .app {
+  margin-left: auto;
+  margin-right: auto;
+}

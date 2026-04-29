@@ -1,0 +1,52 @@
+/* WordJar Mushy Chat background override — scoped only */
+
+#pg-mushy-chat.wordjar-mushy-page {
+  --wordjar-mushy-chat-bg: var(--bg);
+  background: var(--wordjar-mushy-chat-bg);
+}
+
+#pg-mushy-chat.wordjar-mushy-page.active,
+#pg-mushy-chat .wordjar-mushy-shell,
+#pg-mushy-chat .wordjar-mushy-messages,
+#pg-mushy-chat .wordjar-mushy-empty {
+  background: var(--wordjar-mushy-chat-bg);
+}
+
+#pg-mushy-chat .wordjar-mushy-shell,
+#pg-mushy-chat .wordjar-mushy-empty-icon,
+#pg-mushy-chat .wordjar-mushy-empty-title,
+#pg-mushy-chat .wordjar-mushy-bubble {
+  color: var(--ink);
+}
+
+#pg-mushy-chat .wordjar-mushy-empty-sub {
+  color: var(--ink2);
+}
+
+#pg-mushy-chat .wordjar-mushy-msg-avatar {
+  background: var(--ink);
+  color: var(--sur);
+}
+
+#pg-mushy-chat .wordjar-mushy-msg.user .wordjar-mushy-bubble {
+  background: var(--sur2);
+  color: var(--ink);
+}
+
+#pg-mushy-chat .wordjar-mushy-actions button {
+  border-color: var(--bdr);
+  background: var(--sur);
+  color: var(--ink2);
+}
+
+#pg-mushy-chat .wordjar-mushy-meta {
+  color: var(--ink3);
+}
+
+#pg-mushy-chat .wordjar-mushy-typing span {
+  background: var(--ink3);
+}
+
+#pg-mushy-chat .wordjar-mushy-inputbar button {
+  color: var(--ink);
+}

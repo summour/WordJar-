@@ -1,0 +1,163 @@
+/* WordJar top header
+   Mobile-safe single row:
+   - Brand and nav share one row.
+   - Icons have no boxes/borders.
+   - Each icon remains a separate tappable layer.
+   - No right-edge overflow and no overlap with WordJar.
+*/
+
+.app .main-header {
+  --wordjar-header-gap: 10px;
+  --wordjar-nav-gap: 6px;
+  --wordjar-icon-hit-size: 44px;
+  --wordjar-icon-size: 23px;
+  --wordjar-brand-size: clamp(2.1rem, 1.7rem + 1.4vw, 3rem);
+
+  display: flex;
+  align-items: center;
+  gap: var(--wordjar-header-gap);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.app .brand {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: clamp(118px, 32vw, 220px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  font-size: var(--wordjar-brand-size);
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
+.app .top-nav {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  gap: var(--wordjar-nav-gap);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.app .top-btn {
+  width: min(var(--wordjar-icon-hit-size), 100%);
+  height: var(--wordjar-icon-hit-size);
+  min-width: 0;
+  min-height: var(--wordjar-icon-hit-size);
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
+  box-sizing: border-box;
+  color: #111111;
+  pointer-events: auto;
+}
+
+.app .top-btn.active {
+  background: rgba(17, 17, 17, 0.06);
+}
+
+.app .top-btn:active {
+  background: rgba(17, 17, 17, 0.08);
+}
+
+.app .top-btn svg,
+.app #tb-reader svg,
+.app #tb-mushy-chat svg {
+  width: var(--wordjar-icon-size);
+  height: var(--wordjar-icon-size);
+  flex: 0 0 auto;
+  stroke-width: 2.2;
+}
+
+.app #tb-home { order: 1; }
+.app #tb-decks { order: 2; }
+.app #tb-words { order: 3; }
+.app #tb-reader { order: 4; }
+.app #tb-mushy-chat { order: 5; }
+.app #tb-account { order: 6; }
+
+@media (max-width: 767px) {
+  .app .main-header {
+    --wordjar-header-gap: 8px;
+    --wordjar-nav-gap: 4px;
+    --wordjar-icon-hit-size: 40px;
+    --wordjar-icon-size: 22px;
+    --wordjar-brand-size: clamp(2rem, 8.8vw, 2.65rem);
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .app .brand {
+    max-width: clamp(108px, 31vw, 148px);
+  }
+
+  .app .top-btn {
+    border-radius: 13px;
+  }
+}
+
+@media (max-width: 430px) {
+  .app .main-header {
+    --wordjar-header-gap: 7px;
+    --wordjar-nav-gap: 3px;
+    --wordjar-icon-hit-size: 36px;
+    --wordjar-icon-size: 20px;
+    --wordjar-brand-size: clamp(1.78rem, 7.7vw, 2.1rem);
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .app .brand {
+    max-width: clamp(94px, 30vw, 126px);
+  }
+
+  .app .top-btn {
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  .app .main-header {
+    --wordjar-header-gap: 6px;
+    --wordjar-nav-gap: 2px;
+    --wordjar-icon-hit-size: 34px;
+    --wordjar-icon-size: 19px;
+    --wordjar-brand-size: clamp(1.62rem, 7.2vw, 1.9rem);
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .app .brand {
+    max-width: clamp(84px, 29vw, 112px);
+  }
+}
+
+@media (max-width: 360px) {
+  .app .main-header {
+    --wordjar-header-gap: 5px;
+    --wordjar-nav-gap: 2px;
+    --wordjar-icon-hit-size: 32px;
+    --wordjar-icon-size: 18px;
+    --wordjar-brand-size: clamp(1.48rem, 6.8vw, 1.72rem);
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .app .brand {
+    max-width: clamp(76px, 28vw, 96px);
+  }
+}

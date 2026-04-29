@@ -1,0 +1,491 @@
+/* WordJar ChatGPT-inspired UI Theme
+   Scoped to .app so it does not leak outside WordJar.
+   This file never forces hidden overlays to display. */
+
+.app {
+  --wordjar-bg: #ffffff;
+  --wordjar-surface: #ffffff;
+  --wordjar-soft: #f7f7f8;
+  --wordjar-hover: #f4f4f5;
+  --wordjar-border: #e5e5e5;
+  --wordjar-border-strong: #d9d9de;
+  --wordjar-text: #0d0d0d;
+  --wordjar-muted: #5f6068;
+  --wordjar-subtle: #8e8f99;
+  --wordjar-primary: #0d0d0d;
+  --wordjar-danger: #e2554f;
+
+  --wordjar-radius-sm: 14px;
+  --wordjar-radius-md: 18px;
+  --wordjar-radius-lg: 24px;
+  --wordjar-radius-xl: 28px;
+  --wordjar-radius-pill: 999px;
+
+  --wordjar-title: 28px;
+  --wordjar-section: 20px;
+  --wordjar-body: 15px;
+  --wordjar-ui: 14px;
+  --wordjar-meta: 13px;
+  --wordjar-small: 12px;
+
+  --wordjar-weight-title: 760;
+  --wordjar-weight-section: 700;
+  --wordjar-weight-ui: 620;
+  --wordjar-weight-body: 450;
+  --wordjar-weight-meta: 560;
+
+  --bg: var(--wordjar-bg);
+  --sur: var(--wordjar-surface);
+  --sur2: var(--wordjar-soft);
+  --bdr: var(--wordjar-border);
+  --bdr2: var(--wordjar-border-strong);
+  --ink: var(--wordjar-text);
+  --ink2: var(--wordjar-muted);
+  --ink3: var(--wordjar-subtle);
+  --ac: var(--wordjar-primary);
+  --ac-l: var(--wordjar-hover);
+  --ac-d: #242424;
+  --sh: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --r: var(--wordjar-radius-lg);
+  --rs: var(--wordjar-radius-sm);
+
+  background: var(--wordjar-bg);
+  color: var(--wordjar-text);
+  font-weight: var(--wordjar-weight-body);
+}
+
+.app .page,
+.app .study-page {
+  background: var(--wordjar-bg);
+}
+
+.app .main-header {
+  background: rgba(255, 255, 255, 0.88);
+  border-bottom: 1px solid var(--wordjar-border);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 14px 18px;
+}
+
+.app .brand {
+  font-size: 22px;
+  font-weight: var(--wordjar-weight-title);
+  letter-spacing: -0.03em;
+}
+
+.app .ph-title,
+.app .home-title,
+.app .acc-name,
+.app .ov-deck-name,
+.app .rn-title,
+.app .rn-detail-title,
+.app .rn-title-input {
+  font-size: var(--wordjar-title);
+  font-weight: var(--wordjar-weight-title);
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  color: var(--wordjar-text);
+}
+
+.app .sh-title,
+.app .empty-title,
+.app .settings-card-title,
+.app .reader-card-title,
+.app .rn-row-title,
+.app .rn-group,
+.app .deck-options-title,
+.app .rn-move-title {
+  font-size: var(--wordjar-section);
+  font-weight: var(--wordjar-weight-section);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.app .ov-desc,
+.app .empty-sub,
+.app .format-label,
+.app .modal-subtitle,
+.app .deck-options-subtitle,
+.app .rn-sub,
+.app .rn-row-meta,
+.app .rn-detail-meta,
+.app .rn-detail-folder,
+.app .rn-row-preview {
+  font-size: var(--wordjar-meta);
+  font-weight: var(--wordjar-weight-meta);
+  line-height: 1.45;
+  color: var(--wordjar-muted);
+}
+
+.app .sec-lbl,
+.app .filter-card-title,
+.app .rn-move-sub {
+  font-size: var(--wordjar-small);
+  font-weight: var(--wordjar-weight-ui);
+  letter-spacing: 0.02em;
+  color: var(--wordjar-subtle);
+}
+
+.app .top-nav {
+  gap: 8px;
+}
+
+.app .top-btn,
+.app .btn-icon-sq,
+.app .ib,
+.app .dict-add-btn,
+.app .back-btn,
+.app .btn-close,
+.app .deck-options-close,
+.app .fc-close-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: var(--wordjar-radius-md);
+  background: var(--wordjar-surface);
+  border: 1px solid var(--wordjar-border);
+  color: var(--wordjar-text);
+  box-shadow: none;
+  padding: 0;
+}
+
+.app .back-btn,
+.app .btn-close,
+.app .fc-close-btn {
+  border-color: transparent;
+  background: transparent;
+  border-radius: var(--wordjar-radius-sm);
+}
+
+.app .top-btn.active {
+  background: var(--wordjar-soft);
+  border-color: var(--wordjar-text);
+  color: var(--wordjar-text);
+  box-shadow: none;
+}
+
+.app .top-btn:hover:not(.active),
+.app .btn-icon-sq:hover,
+.app .ib:hover,
+.app .dict-add-btn:hover,
+.app .back-btn:hover,
+.app .btn-close:hover,
+.app .deck-options-close:hover,
+.app .fc-close-btn:hover {
+  background: var(--wordjar-hover);
+  opacity: 1;
+}
+
+.app .top-btn svg,
+.app .btn-icon-sq svg,
+.app .ib svg,
+.app .dict-add-btn svg,
+.app .back-btn svg,
+.app .btn-close svg,
+.app .deck-options-close svg,
+.app .fc-close-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+}
+
+.app .btn,
+.app .menu-item,
+.app .deck-options-btn,
+.app .filter-row-clean,
+.app .chip,
+.app .tp,
+.app .tts-action-btn,
+.app .rb,
+.app .rn-tool,
+.app .rn-tab,
+.app .rn-move-option,
+.app .rn-move-cancel {
+  font-family: inherit;
+  font-size: var(--wordjar-ui);
+  font-weight: var(--wordjar-weight-ui);
+  letter-spacing: -0.01em;
+}
+
+.app .btn {
+  min-height: 42px;
+  border-radius: var(--wordjar-radius-md);
+  padding: 0 16px;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+}
+
+.app .btn:active,
+.app .menu-item:active,
+.app .deck-options-btn:active,
+.app .chip:active,
+.app .tp:active {
+  transform: scale(0.985);
+}
+
+.app .btn-p {
+  background: var(--wordjar-primary);
+  border: 1px solid var(--wordjar-primary);
+  color: #ffffff;
+}
+
+.app .btn-p:hover {
+  background: #242424;
+}
+
+.app .btn-s,
+.app .btn-soft-fill,
+.app .menu-item,
+.app .deck-options-btn,
+.app .chip,
+.app .tp {
+  background: var(--wordjar-surface);
+  border: 1px solid var(--wordjar-border);
+  color: var(--wordjar-text);
+}
+
+.app .btn-s:hover,
+.app .btn-soft-fill:hover,
+.app .menu-item:hover,
+.app .deck-options-btn:hover,
+.app .chip:hover:not(.active),
+.app .tp:hover:not(.sel) {
+  background: var(--wordjar-hover);
+  border-color: var(--wordjar-border-strong);
+}
+
+.app .btn-d,
+.app .menu-item.danger,
+.app .deck-options-danger,
+.app .btn-danger-soft {
+  background: #fff7f7;
+  border-color: #f2c1bd;
+  color: var(--wordjar-danger);
+}
+
+.app .fi,
+.app .si,
+.app select,
+.app textarea,
+.app input[type='text'],
+.app input[type='number'] {
+  background: var(--wordjar-surface);
+  border: 1px solid var(--wordjar-border);
+  border-radius: var(--wordjar-radius-lg);
+  color: var(--wordjar-text);
+  font-family: inherit;
+  font-size: var(--wordjar-body);
+  font-weight: var(--wordjar-weight-body);
+  box-shadow: none;
+}
+
+.app .fi,
+.app .si {
+  min-height: 48px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.app .fi:focus,
+.app .si:focus,
+.app select:focus,
+.app textarea:focus,
+.app input[type='text']:focus,
+.app input[type='number']:focus {
+  background: var(--wordjar-surface);
+  border-color: var(--wordjar-text);
+  box-shadow: 0 0 0 3px rgba(13, 13, 13, 0.06);
+  outline: none;
+}
+
+.app .si::placeholder,
+.app .fi::placeholder,
+.app textarea::placeholder,
+.app input::placeholder {
+  color: var(--wordjar-subtle);
+  font-weight: var(--wordjar-weight-body);
+}
+
+.app .fl,
+.app .opt-label {
+  font-size: var(--wordjar-meta);
+  font-weight: var(--wordjar-weight-ui);
+  color: var(--wordjar-muted);
+}
+
+.app .plan-card,
+.app .settings-card,
+.app .stats-box,
+.app .reader-card,
+.app .rn-row,
+.app .rn-card,
+.app .filter-card,
+.app .fc-card-front,
+.app .fc-card-back,
+.app .deck-form-modal,
+.app .modal-card,
+.app .deck-options-card,
+.app .clean-filter-modal,
+.app .rn-move-card {
+  background: var(--wordjar-surface);
+  border: 1px solid var(--wordjar-border);
+  border-radius: var(--wordjar-radius-xl);
+  box-shadow: none;
+}
+
+.app .rn-row,
+.app .reader-card,
+.app .settings-card,
+.app .plan-card {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.035);
+}
+
+.app .overlay {
+  background: rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 20px;
+  z-index: 500;
+}
+
+.app .overlay.open {
+  align-items: center;
+  justify-content: center;
+}
+
+.app .modal-card,
+.app .deck-form-modal,
+.app .deck-options-card,
+.app .clean-filter-modal {
+  width: min(390px, calc(100vw - 32px));
+  max-height: min(86vh, 620px);
+  padding: 22px;
+  overflow: auto;
+}
+
+.app .modal-header,
+.app .deck-options-header,
+.app .deck-modal-header {
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.app .form-row,
+.app .action-row,
+.app .deck-modal-footer,
+.app .clean-filter-actions,
+.app .select-action-buttons {
+  gap: 10px;
+}
+
+.app .deck-modal-footer .btn,
+.app .clean-filter-actions .btn,
+.app .select-action-buttons .btn {
+  min-height: 44px;
+  border-radius: var(--wordjar-radius-md);
+  font-size: var(--wordjar-ui);
+  font-weight: var(--wordjar-weight-ui);
+}
+
+.app .toast {
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  background: rgba(13, 13, 13, 0.92);
+  border-radius: var(--wordjar-radius-pill);
+  font-size: var(--wordjar-meta);
+  font-weight: var(--wordjar-weight-ui);
+  padding: 10px 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  z-index: 1200;
+}
+
+.app #readerNotesPage.active .rn-tabs,
+.app #readerNotesPage.active .rn-tools {
+  border-radius: var(--wordjar-radius-lg);
+  border: 1px solid var(--wordjar-border);
+  background: var(--wordjar-surface);
+  box-shadow: none;
+}
+
+.app #readerNotesPage.active .rn-tab {
+  font-size: var(--wordjar-ui);
+  font-weight: var(--wordjar-weight-ui);
+  border-radius: var(--wordjar-radius-md);
+}
+
+.app #readerNotesPage.active .rn-tool,
+.app #readerNotesPage.active #rnFormatNovelCoreBtn,
+.app #readerNotesPage.active .rn-clean-short-btn {
+  height: 36px;
+  min-width: 36px;
+  border-radius: var(--wordjar-radius-sm);
+  font-size: var(--wordjar-ui);
+  font-weight: var(--wordjar-weight-ui);
+}
+
+.app #readerNotesPage.active #rnFormatNovelCoreBtn {
+  background: var(--wordjar-primary);
+  color: #ffffff;
+  border-color: var(--wordjar-primary);
+}
+
+.app #readerNotesPage.active #rnUndoBtn,
+.app #readerNotesPage.active #rnRedoBtn,
+.app #readerNotesPage.active .rn-circle {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--wordjar-text);
+}
+
+.app #readerNotesPage.active #rnMenu {
+  border-radius: var(--wordjar-radius-lg);
+  border: 1px solid var(--wordjar-border);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.app #readerNotesPage.active #rnMenu button {
+  min-height: 42px;
+  font-size: var(--wordjar-ui);
+  font-weight: var(--wordjar-weight-ui);
+}
+
+@media (max-width: 430px) {
+  .app {
+    --wordjar-title: 26px;
+    --wordjar-section: 19px;
+  }
+
+  .app .main-header {
+    padding: 12px 16px;
+  }
+
+  .app .top-nav {
+    gap: 6px;
+  }
+
+  .app .top-btn,
+  .app .btn-icon-sq,
+  .app .ib,
+  .app .dict-add-btn,
+  .app .back-btn,
+  .app .btn-close,
+  .app .deck-options-close,
+  .app .fc-close-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 16px;
+  }
+
+  .app .modal-card,
+  .app .deck-form-modal,
+  .app .deck-options-card,
+  .app .clean-filter-modal {
+    width: calc(100vw - 28px);
+    padding: 20px;
+    border-radius: 26px;
+  }
+}
