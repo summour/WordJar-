@@ -1,5 +1,5 @@
 // WordJar Deck UI V2
-// Owns compact account System Deck setting and long-press deck reordering.
+// Owns compact account System Deck setting, deck modal color theme, and long-press deck reordering.
 
 (function installWordJarDeckUI() {
   if (window.__wordjarDeckUIInstalled) return;
@@ -9,6 +9,9 @@
   const REORDER_CLASS = 'wordjar-deck-reordering';
   const DRAGGING_CLASS = 'wordjar-deck-dragging';
   const HINT_ID = 'wordjarDeckReorderHint';
+  const DECK_COLOR_PREVIEW_CLASS = 'ที่WordJar-deck-color-preview';
+  const DECK_COLOR_PREVIEW_FILL_CLASS = 'ที่WordJar-deck-color-preview-fill';
+  const STANDARD_DECK_COLORS = ['#09090b', '#f59e0b', '#3b82f6', '#ef4444', '#10b981', '#8b5cf6'];
 
   function ensureSettings() {
     D.settings = D.settings || {};
@@ -17,6 +20,10 @@
 
   function isNoDeck(deckId) {
     return String(deckId || '') === NO_DECK_ID;
+  }
+
+  function normalizeColor(color) {
+    return String(color || '#09090b').trim().toLowerCase();
   }
 
   function removeLegacySystemDeckCard() {
@@ -44,6 +51,88 @@
       .settings-toggle-title { font-size:13px; font-weight:800; color:var(--ink); }
       .settings-toggle-desc { font-size:12px; color:var(--ink2); margin-top:4px; line-height:1.35; }
       .settings-inline-note { color:var(--ink2); font-size:12px; line-height:1.4; margin:0 0 12px; }
+
+      #deckModal .deck-color-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: nowrap;
+        padding: 8px 2px 10px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      #deckModal .deck-color-row::-webkit-scrollbar {
+        display: none;
+      }
+
+      #deckModal .deck-color-row .csw,
+      #deckModal .deck-color-row .custom-color-btn {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        position: relative;
+        border: 2px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .10);
+        transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+      }
+
+      #deckModal .deck-color-row .csw.sel,
+      #deckModal .deck-color-row .custom-color-btn.sel {
+        transform: none;
+        border-color: #e5e7eb;
+        box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px #09090b, 0 2px 8px rgba(0, 0, 0, .10);
+      }
+
+      #deckModal .deck-color-row .custom-color-btn {
+        background: #ffffff;
+        border-style: solid;
+        color: var(--ink);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      #deckModal .deck-color-row .custom-color-btn::before {
+        content: '';
+        width: 14px;
+        height: 14px;
+        background: currentColor;
+        transform: rotate(-45deg);
+        clip-path: polygon(45% 0, 65% 0, 65% 70%, 55% 100%, 45% 70%);
+        opacity: .82;
+        pointer-events: none;
+      }
+
+      #deckModal .deck-color-row .custom-color-btn input[type='color'] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      #deckModal .${DECK_COLOR_PREVIEW_CLASS} {
+        height: 44px;
+        margin-top: 4px;
+        padding: 6px;
+        border-radius: 999px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, .9) inset;
+      }
+
+      #deckModal .${DECK_COLOR_PREVIEW_FILL_CLASS} {
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--ที่WordJar-deck-color, #09090b);
+        transition: background .18s ease;
+      }
 
       #deckList .deck-card {
         touch-action: pan-y;
@@ -94,6 +183,77 @@
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function syncDeckColorPreview(color) {
+    const modal = document.getElementById('deckModal');
+    if (!modal) return;
+
+    const safeColor = normalizeColor(color || window.selDCol);
+    modal.style.setProperty('--ที่WordJar-deck-color', safeColor);
+
+    const customBtn = document.getElementById('customColorWrapper');
+    if (!customBtn) return;
+
+    const isPreset = STANDARD_DECK_COLORS.includes(safeColor);
+    customBtn.classList.toggle('sel', !isPreset);
+    customBtn.style.borderColor = isPreset ? '#e5e7eb' : safeColor;
+  }
+
+  function ensureDeckColorPreview() {
+    const colorRow = document.querySelector('#deckModal .deck-color-row');
+    if (!colorRow) return;
+
+    STANDARD_DECK_COLORS.forEach(color => {
+      const exists = colorRow.querySelector(`.csw[data-c="${color}"]`);
+      if (exists) return;
+
+      const customButton = document.getElementById('customColorWrapper');
+      const swatch = document.createElement('div');
+      swatch.className = 'csw';
+      swatch.dataset.c = color;
+      swatch.style.background = color;
+      swatch.addEventListener('click', () => window.selDC?.(color));
+      colorRow.insertBefore(swatch, customButton || null);
+    });
+
+    const customButton = document.getElementById('customColorWrapper');
+    if (customButton) customButton.setAttribute('aria-label', 'Choose custom deck color');
+
+    if (!colorRow.parentElement.querySelector(`.${DECK_COLOR_PREVIEW_CLASS}`)) {
+      const preview = document.createElement('div');
+      preview.className = DECK_COLOR_PREVIEW_CLASS;
+      preview.innerHTML = `<div class="${DECK_COLOR_PREVIEW_FILL_CLASS}"></div>`;
+      colorRow.insertAdjacentElement('afterend', preview);
+    }
+
+    syncDeckColorPreview(window.selDCol || '#09090b');
+  }
+
+  function installDeckColorThemeHook() {
+    if (window.__wordjarDeckColorThemeHookInstalled) return;
+    window.__wordjarDeckColorThemeHookInstalled = true;
+
+    const originalSelDC = window.selDC;
+    if (typeof originalSelDC === 'function') {
+      window.selDC = function selectDeckColorWithPreview(colorHex) {
+        originalSelDC.apply(this, arguments);
+        ensureDeckColorPreview();
+        syncDeckColorPreview(colorHex);
+      };
+    }
+
+    const originalOpenDeckModal = window.openDeckModal;
+    if (typeof originalOpenDeckModal === 'function') {
+      window.openDeckModal = function openDeckModalWithCalendarStyleColorPicker() {
+        originalOpenDeckModal.apply(this, arguments);
+        ensureDeckColorPreview();
+        syncDeckColorPreview(window.selDCol || '#09090b');
+      };
+    }
+
+    document.addEventListener('DOMContentLoaded', ensureDeckColorPreview);
+    ensureDeckColorPreview();
   }
 
   function ensureSystemDeckModal() {
@@ -397,6 +557,7 @@
   }
 
   injectStyles();
+  installDeckColorThemeHook();
   installAccountSettingsHook();
   injectSystemDeckSettingsRow();
   removeLegacySystemDeckCard();
