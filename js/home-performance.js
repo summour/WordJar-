@@ -1,9 +1,9 @@
-// WordJar Home Performance V1
-// Updates Home without filtering all words repeatedly when cached dashboard stats are available.
+// WordJar Home Performance V2
+// Updates Home with Duolingo-style streak logic.
 
 (function installHomePerformance() {
-  if (window.__wordjarHomePerformanceInstalled) return;
-  window.__wordjarHomePerformanceInstalled = true;
+  if (window.__wordjarHomePerformanceInstalledV2) return;
+  window.__wordjarHomePerformanceInstalledV2 = true;
 
   let cachedKey = '';
   let cachedDue = 0;
@@ -33,17 +33,32 @@
     return count;
   }
 
-  function fallbackStreak() {
-    if (typeof streak === 'function') return streak();
-    let s = 0;
-    const td = new Date();
+  function hasStudiedOn(date, offsetFromToday) {
+    const key = date.toDateString();
+    const studied = !!(D.studyDays || {})[key];
+    const isToday = offsetFromToday === 0;
+    return studied || (isToday && Number(D.todayDone || 0) > 0);
+  }
+
+  function duolingoStreak() {
+    let count = 0;
+    const today = new Date();
+
     for (let i = 0; i < 365; i++) {
-      const d = new Date(td);
-      d.setDate(td.getDate() - i);
-      if ((D.studyDays || {})[d.toDateString()]) s++;
-      else break;
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+
+      if (hasStudiedOn(date, i)) {
+        count++;
+        continue;
+      }
+
+      // Duolingo-like behavior: if today is not done yet, keep yesterday's streak visible.
+      if (i === 0) continue;
+      break;
     }
-    return s;
+
+    return count;
   }
 
   function computeHomeStats() {
@@ -59,7 +74,7 @@
 
     cachedKey = key;
     cachedDue = Number(due || 0);
-    cachedStreak = fallbackStreak();
+    cachedStreak = duolingoStreak();
     return { due: cachedDue, streakCount: cachedStreak };
   }
 
@@ -67,6 +82,8 @@
     const el = document.getElementById(id);
     if (el && el.textContent !== String(value)) el.textContent = value;
   }
+
+  window.streak = duolingoStreak;
 
   window.updateHome = function updateHomeFast() {
     const { due, streakCount } = computeHomeStats();
@@ -88,6 +105,7 @@
 
   window.WordJarHomePerformance = {
     clearCache() { cachedKey = ''; cachedDue = 0; cachedStreak = 0; },
-    computeHomeStats
+    computeHomeStats,
+    duolingoStreak
   };
 })();
