@@ -162,3 +162,75 @@ body:has(#pg-mushy-chat.active) .wordjar-mushy-messages {
 #pg-mushy-chat.has-messages .wordjar-mushy-messages {
   padding-top: 8px !important;
 }
+
+/* Composer balance: the textarea and send button become one input pill. */
+body:has(#pg-mushy-chat.active) .wordjar-mushy-inputbar {
+  grid-template-columns: minmax(0, 1fr) 44px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: min(calc(100vw - 42px), 430px) !important;
+  min-height: 62px !important;
+  padding: 8px 9px 8px 18px !important;
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 32px !important;
+  background: #ffffff !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .08) !important;
+  box-sizing: border-box !important;
+}
+
+body:has(#pg-mushy-chat.active) .wordjar-mushy-inputbar textarea {
+  min-height: 28px !important;
+  max-height: 120px !important;
+  height: auto;
+  padding: 8px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  line-height: 1.35 !important;
+}
+
+body:has(#pg-mushy-chat.active) .wordjar-mushy-inputbar textarea:focus {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+body:has(#pg-mushy-chat.active) .wordjar-mushy-inputbar button {
+  width: 44px !important;
+  height: 44px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #111111 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+body:has(#pg-mushy-chat.active) .wordjar-mushy-inputbar button svg {
+  width: 22px !important;
+  height: 22px !important;
+  stroke-width: 2.6 !important;
+}
+
+body:has(#pg-mushy-chat.active) .wordjar-mushy-inputbar button:active {
+  background: #111111 !important;
+  opacity: .82 !important;
+}
+
+body:has(#pg-mushy-chat.active) .wordjar-mushy-inputbar button:disabled {
+  opacity: .35 !important;
+}
+
+@media (max-width: 430px) {
+  body:has(#pg-mushy-chat.active) .wordjar-mushy-inputbar {
+    width: calc(100vw - 34px) !important;
+    min-height: 60px !important;
+    grid-template-columns: minmax(0, 1fr) 42px !important;
+    padding: 7px 8px 7px 16px !important;
+  }
+
+  body:has(#pg-mushy-chat.active) .wordjar-mushy-inputbar button {
+    width: 42px !important;
+    height: 42px !important;
+  }
+}
