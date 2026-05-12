@@ -56,6 +56,15 @@ Rules:
 User message:
 `;
 
+  const SECTION_NAMES = [
+    'การแปล',
+    'ความหมายในบริบท',
+    'คำศัพท์และวลีสำคัญ',
+    'ไวยากรณ์',
+    'น้ำเสียงและข้อควรระวัง',
+    'Flashcards ที่ควรเก็บ'
+  ];
+
   function patchMushyAI() {
     const ai = window.WordJarMushyAI;
     if (!ai || typeof ai.ask !== 'function' || ai.__plainAnalysisPatched) return false;
@@ -76,11 +85,143 @@ User message:
     return true;
   }
 
-  if (patchMushyAI()) return;
+  function escapeText(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function splitMushySections(text) {
+    const normalized = String(text || '').replace(/\r\n/g, '\n').trim();
+    if (!normalized) return [];
+
+    const escapedNames = SECTION_NAMES.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const headingPattern = new RegExp(`(^|\\n)(${escapedNames.join('|')})(?=\\n|$)`, 'g');
+    const matches = [...normalized.matchAll(headingPattern)];
+    if (!matches.length) return [{ title: '', body: normalized }];
+
+    return matches.map((match, index) => {
+      const title = match[2];
+      const bodyStart = match.index + match[0].length;
+      const bodyEnd = index + 1 < matches.length ? matches[index + 1].index : normalized.length;
+      return { title, body: normalized.slice(bodyStart, bodyEnd).trim() };
+    }).filter(section => section.title || section.body);
+  }
+
+  function renderSectionBody(body) {
+    const lines = String(body || '').split('\n').map(line => line.trim()).filter(Boolean);
+    const blocks = [];
+    let current = [];
+
+    lines.forEach(line => {
+      const isTermLine = /^[^=]{1,80}\s=\s/.test(line);
+      const isFlashcard = lines.length <= 6 && !line.includes('.') && line.length <= 70;
+
+      if (isTermLine || isFlashcard) {
+        if (current.length) {
+          blocks.push(`<p>${escapeText(current.join(' '))}</p>`);
+          current = [];
+        }
+        blocks.push(`<div class="wordjar-mushy-line">${escapeText(line)}</div>`);
+        return;
+      }
+
+      current.push(line);
+    });
+
+    if (current.length) blocks.push(`<p>${escapeText(current.join(' '))}</p>`);
+    return blocks.join('');
+  }
+
+  function formatMushyBubble(bubble) {
+    if (!bubble || bubble.dataset.wordjarFormatted === '1') return;
+
+    const firstParagraph = bubble.querySelector(':scope > p');
+    if (!firstParagraph) return;
+
+    const text = firstParagraph.innerText || firstParagraph.textContent || '';
+    const sections = splitMushySections(text);
+    if (!sections.length) return;
+
+    firstParagraph.outerHTML = sections.map(section => {
+      const heading = section.title
+        ? `<div class="wordjar-mushy-section-title">${escapeText(section.title)}</div>`
+        : '';
+      return `<section class="wordjar-mushy-section">${heading}${renderSectionBody(section.body)}</section>`;
+    }).join('');
+
+    bubble.dataset.wordjarFormatted = '1';
+  }
+
+  function formatVisibleMushyMessages() {
+    document
+      .querySelectorAll('#wordjarMushyMessages .wordjar-mushy-msg.assistant .wordjar-mushy-bubble')
+      .forEach(formatMushyBubble);
+  }
+
+  function injectFormatterStyle() {
+    if (document.getElementById('wordjarMushyReadableAnswerStyle')) return;
+
+    const style = document.createElement('style');
+    style.id = 'wordjarMushyReadableAnswerStyle';
+    style.textContent = `
+      #wordjarMushyMessages .wordjar-mushy-section {
+        margin: 0 0 24px;
+      }
+
+      #wordjarMushyMessages .wordjar-mushy-section:last-child {
+        margin-bottom: 0;
+      }
+
+      #wordjarMushyMessages .wordjar-mushy-section-title {
+        margin: 0 0 10px;
+        color: var(--ink);
+        font-weight: 850;
+        line-height: 1.25;
+      }
+
+      #wordjarMushyMessages .wordjar-mushy-section p {
+        margin: 0 0 14px;
+        line-height: 1.75;
+      }
+
+      #wordjarMushyMessages .wordjar-mushy-section p:last-child {
+        margin-bottom: 0;
+      }
+
+      #wordjarMushyMessages .wordjar-mushy-line {
+        margin: 0 0 9px;
+        line-height: 1.65;
+      }
+
+      #wordjarMushyMessages .wordjar-mushy-line:last-child {
+        margin-bottom: 0;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function installMessageFormatter() {
+    injectFormatterStyle();
+    formatVisibleMushyMessages();
+
+    const target = document.getElementById('wordjarMushyMessages');
+    if (!target || target.dataset.wordjarFormatterObserver === '1') return;
+
+    target.dataset.wordjarFormatterObserver = '1';
+    const observer = new MutationObserver(() => formatVisibleMushyMessages());
+    observer.observe(target, { childList: true, subtree: true });
+  }
+
+  if (patchMushyAI()) installMessageFormatter();
 
   const timer = setInterval(() => {
-    if (patchMushyAI()) clearInterval(timer);
+    if (patchMushyAI()) installMessageFormatter();
   }, 120);
 
   setTimeout(() => clearInterval(timer), 60000);
+  document.addEventListener('click', () => setTimeout(installMessageFormatter, 0), true);
 })();
