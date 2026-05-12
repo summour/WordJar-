@@ -34,11 +34,14 @@
   text-align: center !important;
 }
 
-.app .top-nav {
+html body .app .main-header > .top-nav,
+html body .app .top-nav {
   position: fixed !important;
-  left: 50% !important;
+  inset: auto auto var(--wordjar-dock-bottom) 50% !important;
+  top: auto !important;
   right: auto !important;
   bottom: var(--wordjar-dock-bottom) !important;
+  left: 50% !important;
   z-index: 260 !important;
   width: min(calc(100vw - 42px), 430px) !important;
   height: var(--wordjar-dock-height) !important;
@@ -50,6 +53,7 @@
   justify-items: center !important;
   gap: 2px !important;
   padding: 8px !important;
+  margin: 0 !important;
   border: 1px solid rgba(228, 228, 231, 0.78) !important;
   border-radius: 999px !important;
   background: rgba(255, 255, 255, 0.88) !important;
@@ -60,6 +64,13 @@
   overflow: hidden !important;
   box-sizing: border-box !important;
   flex: initial !important;
+}
+
+html body .app .main-header > .top-nav::before,
+html body .app .main-header > .top-nav::after,
+html body .app .top-nav::before,
+html body .app .top-nav::after {
+  content: none !important;
 }
 
 .app .top-btn {
@@ -118,7 +129,8 @@
     padding: 12px 16px 10px !important;
   }
 
-  .app .top-nav {
+  html body .app .main-header > .top-nav,
+  html body .app .top-nav {
     width: min(calc(100vw - 34px), 396px) !important;
     padding: 7px !important;
   }
@@ -138,7 +150,8 @@
 }
 
 @media (max-width: 380px) {
-  .app .top-nav {
+  html body .app .main-header > .top-nav,
+  html body .app .top-nav {
     width: min(calc(100vw - 26px), 360px) !important;
     gap: 0 !important;
     padding: 6px !important;
