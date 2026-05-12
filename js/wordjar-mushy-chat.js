@@ -153,6 +153,12 @@
     return '<span class="wordjar-mushy-empty-avatar-fallback" aria-hidden="true">🐈‍⬛🍄</span>';
   }
 
+  function updatePageState(history) {
+    const page = document.getElementById('pg-mushy-chat');
+    if (!page) return;
+    page.classList.toggle('has-messages', history.length > 0);
+  }
+
   function ensureMushyClearDialog() {
     let overlay = document.getElementById('wordjarMushyClearDialog');
     if (overlay) return overlay;
@@ -320,6 +326,8 @@
     const subtitle = document.getElementById('wordjarMushySubtitle');
 
     if (!messages) return;
+
+    updatePageState(history);
 
     if (!history.length) {
       messages.innerHTML = `
