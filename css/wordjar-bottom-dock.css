@@ -27,6 +27,10 @@
   overflow: visible !important;
 }
 
+body:has(#pg-mushy-chat.active) .app .main-header {
+  z-index: 1750 !important;
+}
+
 .app .brand {
   max-width: none !important;
   flex: 0 0 auto !important;
