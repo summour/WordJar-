@@ -51,7 +51,6 @@
   color: var(--ink);
 }
 
-/* Mushy owns its layout. Do not reserve space for the global WordJar header. */
 body:has(#pg-mushy-chat.active) {
   --wordjar-mushy-main-header-height: 0px;
 }
@@ -101,15 +100,14 @@ body:has(#pg-mushy-chat.active) .wordjar-mushy-messages {
   ) !important;
 }
 
-/* After the first message, switch from landing view to real chat view. */
-body:has(#pg-mushy-chat.active #wordjarMushyMessages .wordjar-mushy-msg)
-  .wordjar-mushy-shell {
+/* Chat state is controlled by JS with .has-messages.
+   Avoid descendant :has() here; it can make iOS Safari reflow heavily while typing. */
+#pg-mushy-chat.has-messages .wordjar-mushy-shell {
   padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important;
   box-sizing: border-box !important;
 }
 
-body:has(#pg-mushy-chat.active #wordjarMushyMessages .wordjar-mushy-msg)
-  .wordjar-mushy-header {
+#pg-mushy-chat.has-messages .wordjar-mushy-header {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
@@ -124,30 +122,25 @@ body:has(#pg-mushy-chat.active #wordjarMushyMessages .wordjar-mushy-msg)
   -webkit-backdrop-filter: none !important;
 }
 
-body:has(#pg-mushy-chat.active #wordjarMushyMessages .wordjar-mushy-msg)
-  .wordjar-mushy-back,
-body:has(#pg-mushy-chat.active #wordjarMushyMessages .wordjar-mushy-msg)
-  .wordjar-mushy-avatar {
+#pg-mushy-chat.has-messages .wordjar-mushy-back,
+#pg-mushy-chat.has-messages .wordjar-mushy-avatar {
   display: none !important;
 }
 
-body:has(#pg-mushy-chat.active #wordjarMushyMessages .wordjar-mushy-msg)
-  .wordjar-mushy-title-wrap {
+#pg-mushy-chat.has-messages .wordjar-mushy-title-wrap {
   grid-column: 1 !important;
   text-align: left !important;
   pointer-events: none !important;
 }
 
-body:has(#pg-mushy-chat.active #wordjarMushyMessages .wordjar-mushy-msg)
-  .wordjar-mushy-title {
+#pg-mushy-chat.has-messages .wordjar-mushy-title {
   font-size: clamp(1.65rem, 7vw, 2.25rem) !important;
   font-weight: 800 !important;
   letter-spacing: -0.05em !important;
   line-height: 1 !important;
 }
 
-body:has(#pg-mushy-chat.active #wordjarMushyMessages .wordjar-mushy-msg)
-  .wordjar-mushy-subtitle {
+#pg-mushy-chat.has-messages .wordjar-mushy-subtitle {
   display: block !important;
   margin-top: 6px !important;
   color: var(--ink2) !important;
@@ -155,8 +148,7 @@ body:has(#pg-mushy-chat.active #wordjarMushyMessages .wordjar-mushy-msg)
   line-height: 1.35 !important;
 }
 
-body:has(#pg-mushy-chat.active #wordjarMushyMessages .wordjar-mushy-msg)
-  .wordjar-mushy-clear {
+#pg-mushy-chat.has-messages .wordjar-mushy-clear {
   grid-column: 2 !important;
   min-width: 68px !important;
   height: 42px !important;
@@ -167,7 +159,6 @@ body:has(#pg-mushy-chat.active #wordjarMushyMessages .wordjar-mushy-msg)
   font-size: 0.95rem !important;
 }
 
-body:has(#pg-mushy-chat.active #wordjarMushyMessages .wordjar-mushy-msg)
-  .wordjar-mushy-messages {
+#pg-mushy-chat.has-messages .wordjar-mushy-messages {
   padding-top: 8px !important;
 }
