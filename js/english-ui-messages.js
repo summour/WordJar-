@@ -1,14 +1,11 @@
 // Jarble English UI Messages V1
 // Keeps the English version free from Thai UI notifications/status text.
-// Also normalizes old WordJar-facing branding to Jarble in the live UI.
+// Branding must be changed directly in safe UI strings, not by global DOM mutation.
 // This only translates exact app/system messages, not vocabulary meanings or user content.
 
-(function installJarbleEnglishUIMessages() {
+(function installWordJarEnglishUIMessages() {
   if (window.__wordjarEnglishUIMessagesInstalled) return;
   window.__wordjarEnglishUIMessagesInstalled = true;
-
-  const APP_NAME = 'Jarble';
-  const OLD_APP_NAME = 'WordJar';
 
   const MESSAGE_MAP = new Map([
     ['ยังไม่มี API Key ใน Private API Key', 'No API key found. Add your Private API Key in Settings.'],
@@ -32,15 +29,8 @@
     ['ไม่พบข้อมูล', 'No data found']
   ]);
 
-  function replaceBranding(value) {
-    return String(value ?? '')
-      .replaceAll(OLD_APP_NAME, APP_NAME)
-      .replaceAll('wordjar', 'jarble')
-      .replaceAll('Wordjar', APP_NAME);
-  }
-
   function translateMessage(value) {
-    const text = replaceBranding(value);
+    const text = String(value ?? '');
     const trimmed = text.trim();
     if (MESSAGE_MAP.has(trimmed)) return MESSAGE_MAP.get(trimmed);
 
@@ -49,49 +39,6 @@
       if (output.includes(th)) output = output.replaceAll(th, en);
     });
     return output;
-  }
-
-  function patchDocumentBranding() {
-    document.title = replaceBranding(document.title || `${APP_NAME} - SUMMOUR`);
-
-    const appTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
-    if (appTitle) appTitle.setAttribute('content', APP_NAME);
-
-    const images = document.querySelectorAll('img[alt]');
-    images.forEach(img => {
-      const nextAlt = replaceBranding(img.getAttribute('alt'));
-      if (nextAlt !== img.getAttribute('alt')) img.setAttribute('alt', nextAlt);
-    });
-
-    const shareWatermark = document.getElementById('shareCardWatermark');
-    if (shareWatermark) shareWatermark.textContent = 'jarble';
-  }
-
-  function patchDialogDefaults() {
-    const dialog = window.WordJarDialog;
-    if (!dialog || dialog.__jarbleBrandingPatched) return;
-
-    const originalAlert = dialog.alert;
-    const originalNotify = dialog.notify;
-
-    if (typeof originalAlert === 'function') {
-      dialog.alert = function jarbleAlert(options = {}) {
-        if (typeof options === 'string') return originalAlert.call(this, replaceBranding(options));
-        return originalAlert.call(this, {
-          ...options,
-          title: replaceBranding(options.title || APP_NAME),
-          message: replaceBranding(options.message || '')
-        });
-      };
-    }
-
-    if (typeof originalNotify === 'function') {
-      dialog.notify = function jarbleNotify(message, title = APP_NAME) {
-        return originalNotify.call(this, replaceBranding(message), replaceBranding(title));
-      };
-    }
-
-    dialog.__jarbleBrandingPatched = true;
   }
 
   function patchToast() {
@@ -149,7 +96,6 @@
         mutation.addedNodes.forEach(normalizeElement);
         if (mutation.type === 'characterData') normalizeTextNode(mutation.target);
       });
-      patchDocumentBranding();
     });
 
     observer.observe(document.documentElement, {
@@ -162,8 +108,6 @@
   }
 
   function boot() {
-    patchDocumentBranding();
-    patchDialogDefaults();
     patchToast();
     patchAutoFillStatus();
     normalizeElement(document.body);
@@ -176,11 +120,8 @@
     boot
   };
 
-  window.JarbleEnglishUIMessages = window.WordJarEnglishUIMessages;
-
   boot();
   setTimeout(boot, 0);
   setTimeout(boot, 500);
-  setTimeout(boot, 1500);
   document.addEventListener('click', () => setTimeout(boot, 0), true);
 })();
