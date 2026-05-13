@@ -1,4 +1,4 @@
-// WordJar Dialogs V1
+// Jarble Dialogs V1
 // Owns app-styled alert and confirm dialogs.
 
 (function installWordJarDialogs() {
@@ -7,6 +7,7 @@
 
   const STYLE_ID = 'wordjarDialogsStyle';
   const MODAL_ID = 'wordjarDialogModal';
+  const APP_NAME = 'Jarble';
   const queue = [];
   let activeRequest = null;
 
@@ -160,7 +161,7 @@
     const cancel = document.getElementById('wordjarDialogCancel');
     const confirm = document.getElementById('wordjarDialogConfirm');
 
-    title.textContent = request.title || 'WordJar';
+    title.textContent = request.title || APP_NAME;
     message.textContent = request.message || '';
     cancel.textContent = request.cancelText || 'Cancel';
     confirm.textContent = request.confirmText || 'OK';
@@ -222,18 +223,18 @@
 
   async function alertDialog(options = {}) {
     if (typeof options === 'string') {
-      return ask({ type: 'alert', title: 'WordJar', message: options, confirmText: 'OK' });
+      return ask({ type: 'alert', title: APP_NAME, message: options, confirmText: 'OK' });
     }
 
     return ask({
       type: 'alert',
-      title: options.title || 'WordJar',
+      title: options.title || APP_NAME,
       message: options.message || '',
       confirmText: options.confirmText || 'OK'
     });
   }
 
-  function notify(message, title = 'WordJar') {
+  function notify(message, title = APP_NAME) {
     alertDialog({ title, message: String(message || ''), confirmText: 'OK' });
   }
 
