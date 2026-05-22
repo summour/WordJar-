@@ -1,11 +1,25 @@
 // WordJar Mushy Profile Avatar Patch
 // Keeps Mushy's empty state and clear dialog aligned with the selected profile avatar.
+// Also upgrades Mushy chat to long-form smart Gemini responses.
 
 (function installWordJarMushyProfileAvatarPatch() {
   if (window.__wordjarMushyProfileAvatarPatchInstalled) return;
   window.__wordjarMushyProfileAvatarPatchInstalled = true;
 
   const STYLE_ID = 'wordjarMushyProfileAvatarPatchStyle';
+  const SMART_PATCH_FLAG = '__wordjarMushySmartResponsePatchInstalled';
+  const CONTEXT_KEY = 'wordjar_mushy_pending_context_v1';
+  const API_VERSION = 'v1beta';
+  const MAX_OUTPUT_TOKENS = 8192;
+  const MAX_CONTEXT_CHARS = 20000;
+  const MAX_QUESTION_CHARS = 5000;
+  const SMART_MODELS = [
+    'gemini-2.5-pro',
+    'gemini-pro-latest',
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-flash-latest'
+  ];
 
   function safeText(value) {
     return String(value ?? '')
@@ -60,6 +74,37 @@
         background: transparent;
         box-shadow: none;
         filter: none;
+      }
+
+      #pg-mushy-chat .wordjar-mushy-messages {
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-top: 28px;
+        padding-bottom: calc(24px + env(safe-area-inset-bottom));
+      }
+
+      #pg-mushy-chat .wordjar-mushy-msg,
+      #pg-mushy-chat .wordjar-mushy-bubble,
+      #pg-mushy-chat .wordjar-mushy-bubble p {
+        max-height: none;
+        height: auto;
+        overflow: visible;
+        -webkit-line-clamp: unset;
+        line-clamp: unset;
+      }
+
+      #pg-mushy-chat .wordjar-mushy-bubble {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      #pg-mushy-chat .wordjar-mushy-msg.assistant .wordjar-mushy-bubble {
+        line-height: 1.72;
+      }
+
+      #pg-mushy-chat .wordjar-mushy-msg.assistant .wordjar-mushy-bubble p + p {
+        margin-top: 1em;
       }
     `;
 
@@ -177,10 +222,201 @@
     };
   }
 
+  function getUserLevel() {
+    return String(
+      window.D?.profile?.userLevel ||
+      window.D?.profile?.englishLevel ||
+      window.D?.profile?.cefrLevel ||
+      window.D?.reader?.userLevel ||
+      'B1'
+    ).trim().toUpperCase() || 'B1';
+  }
+
+  function normalizeText(value, maxLength) {
+    return String(value || '')
+      .replace(/\r\n/g, '\n')
+      .replace(/[\t ]+/g, ' ')
+      .replace(/\n{4,}/g, '\n\n\n')
+      .trim()
+      .slice(0, maxLength);
+  }
+
+  async function ensureApiKey() {
+    if (typeof window.initAppConfig === 'function') await window.initAppConfig();
+    const key = String(
+      window.globalApiKey || window.getApiKeyFromMemory?.() || ''
+    ).trim();
+    if (!key) throw new Error('NO_API_KEY');
+    return key;
+  }
+
+  function buildSmartMushyPrompt(input = {}) {
+    const level = getUserLevel();
+    const task = String(input.task || 'chat');
+    const question = normalizeText(
+      input.question || input.message || '',
+      MAX_QUESTION_CHARS
+    );
+    const context = normalizeText(
+      input.contextText || input.context || '',
+      MAX_CONTEXT_CHARS
+    );
+
+    return `You are Mushy, WordJar's strongest English-learning assistant.\n\nCore role:\n- Act like Gemini-level language tutor for Thai learners.\n- Main language is Thai. Use English only for examples, vocabulary, grammar labels, and quoted text.\n- Be accurate, context-aware, and useful for serious English study.\n- Do not pretend to change app data unless a WordJar function actually does it.\n\nLearner level: ${level}\nTask: ${task}\n\nContext from WordJar, Reader, deck, or previous chat:\n${context || '(no extra context)'}\n\nUser message:\n${question || '(no question provided)'}\n\nAnswer policy:\n- Do not summarize aggressively. Give complete, long-form answers when the user asks for translation, grammar, nuance, or analysis.\n- Preserve paragraph spacing. Use readable Thai paragraphs.\n- Avoid cramped bullet lists unless a list is clearly better.\n- For English text analysis, cover: การแปล, ความหมายในบริบท, คำศัพท์และวลีสำคัญ, grammar / sentence structure, nuance, and extra examples.\n- If the text is long, analyze the most important parts first and say clearly what remains.\n- For vocabulary, explain meaning in context, pronunciation if useful, collocations, register, common mistakes, and 2-4 examples.\n- For grammar, explain the structure, why it is used, and how to reuse it.\n- Match examples to ${level}, but do not oversimplify important nuance.\n- End naturally. Do not force cat roleplay or excessive emoji.\n\nOutput requirements:\n- Use Thai headings only when they improve readability.\n- Never cut off mid-section intentionally.\n- If the API output limit is reached, end with: [กดต่อเพื่อให้ Mushy วิเคราะห์ต่อ]`;
+  }
+
+  function geminiEndpoint(model, apiKey) {
+    return `https://generativelanguage.googleapis.com/${API_VERSION}/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  }
+
+  function shouldTryNextModel(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return error?.status === 400 ||
+      error?.status === 404 ||
+      message.includes('not found') ||
+      message.includes('unsupported') ||
+      message.includes('model');
+  }
+
+  async function callMushyGeminiModel({ apiKey, model, prompt, options }) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), options.timeoutMs || 90000);
+
+    try {
+      const response = await fetch(geminiEndpoint(model, apiKey), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: options.temperature ?? 0.45,
+            topP: options.topP ?? 0.95,
+            maxOutputTokens: options.maxOutputTokens || MAX_OUTPUT_TOKENS
+          }
+        })
+      });
+
+      const raw = await response.text();
+      let payload = null;
+      try { payload = JSON.parse(raw); } catch (err) {}
+
+      if (!response.ok) {
+        const apiMessage = payload?.error?.message || raw || `HTTP ${response.status}`;
+        const error = new Error(`AI_${response.status}: ${apiMessage}`);
+        error.status = response.status;
+        error.model = model;
+        error.apiMessage = apiMessage;
+        throw error;
+      }
+
+      const candidate = payload?.candidates?.[0] || {};
+      const text = candidate.content?.parts
+        ?.map(part => part.text || '')
+        .join('\n')
+        .trim() || '';
+
+      if (!text) throw new Error(`EMPTY_AI_RESPONSE from ${model}`);
+
+      return {
+        text,
+        model,
+        finishReason: candidate.finishReason || ''
+      };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function userFacingError(error) {
+    const message = String(error?.message || '');
+    const apiMessage = String(error?.apiMessage || '');
+    if (message.includes('NO_API_KEY')) return 'ยังไม่มี Private API Key ใน Settings';
+    if (message.includes('API_KEY_INVALID') || message.includes('API key not valid')) return 'API Key ไม่ถูกต้อง ตรวจใน Settings อีกครั้ง';
+    if (message.includes('403') || message.includes('PERMISSION_DENIED')) return 'API Key ยังไม่มีสิทธิ์ใช้โมเดลนี้ หรือถูกจำกัด referrer';
+    if (message.includes('429')) return 'Gemini quota หรือ rate limit เต็มชั่วคราว';
+    if (message.includes('Failed to fetch') || message.includes('aborted')) return 'เชื่อมต่อ Gemini ไม่สำเร็จ หรือคำตอบใช้เวลานานเกินไป';
+    return `Mushy ตอบไม่สำเร็จ: ${apiMessage || message || 'unknown error'}`;
+  }
+
+  async function askSmartMushy(input = {}) {
+    const apiKey = await ensureApiKey();
+    const prompt = buildSmartMushyPrompt(input);
+    const models = input.models || SMART_MODELS;
+    let lastError = null;
+
+    for (const model of models) {
+      try {
+        const result = await callMushyGeminiModel({
+          apiKey,
+          model,
+          prompt,
+          options: {
+            maxOutputTokens: input.maxOutputTokens || MAX_OUTPUT_TOKENS,
+            temperature: input.temperature,
+            topP: input.topP,
+            timeoutMs: input.timeoutMs
+          }
+        });
+
+        const isTokenCut = String(result.finishReason).toUpperCase() === 'MAX_TOKENS';
+        const suffix = isTokenCut && !result.text.includes('[กดต่อ')
+          ? '\n\n[กดต่อเพื่อให้ Mushy วิเคราะห์ต่อ]'
+          : '';
+
+        window.WordJarMushyAI.lastModel = result.model;
+        return {
+          text: `${result.text}${suffix}`,
+          model: result.model,
+          cached: false,
+          finishReason: result.finishReason
+        };
+      } catch (err) {
+        lastError = err;
+        console.warn('Smart Mushy model failed', model, err);
+        if (!shouldTryNextModel(err)) break;
+      }
+    }
+
+    throw lastError || new Error('MUSHY_AI_FAILED');
+  }
+
+  function patchReaderContextLimit() {
+    if (window.__wordjarMushyReaderContextLimitPatched || !window.WordJarMushyChat?.askFromReader) return;
+    window.__wordjarMushyReaderContextLimitPatched = true;
+
+    window.WordJarMushyChat.askFromReader = function askFromReaderLong(text, question) {
+      const cleanText = normalizeText(text, MAX_CONTEXT_CHARS);
+      sessionStorage.setItem(CONTEXT_KEY, JSON.stringify({
+        source: 'reader',
+        text: cleanText
+      }));
+      WordJarMushyChat.open();
+      if (!question) return;
+
+      const input = document.getElementById('wordjarMushyInput');
+      if (!input) return;
+      input.value = question;
+      WordJarMushyChat.autosizeInput?.();
+    };
+  }
+
+  function patchSmartMushyAI() {
+    if (window[SMART_PATCH_FLAG] || !window.WordJarMushyAI) return;
+    window[SMART_PATCH_FLAG] = true;
+
+    window.WordJarMushyAI.ask = askSmartMushy;
+    window.WordJarMushyAI.smartModels = SMART_MODELS;
+    window.WordJarMushyAI.maxOutputTokens = MAX_OUTPUT_TOKENS;
+    window.WordJarMushyAI.userFacingError = userFacingError;
+  }
+
   function boot() {
     injectStyle();
     patchClearAction();
     applyClearDialogAvatar();
+    patchSmartMushyAI();
+    patchReaderContextLimit();
   }
 
   const observer = new MutationObserver(applyClearDialogAvatar);
@@ -189,5 +425,6 @@
   boot();
   setTimeout(boot, 0);
   setTimeout(boot, 400);
+  setTimeout(boot, 1200);
   document.addEventListener('click', () => setTimeout(boot, 0), true);
 })();
