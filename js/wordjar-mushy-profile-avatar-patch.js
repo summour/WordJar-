@@ -80,7 +80,10 @@
         overflow-y: auto;
         overflow-x: hidden;
         padding-top: 28px;
-        padding-bottom: calc(24px + env(safe-area-inset-bottom));
+        padding-bottom: calc(
+          var(--wordjar-dock-height, 70px) + 150px +
+          env(safe-area-inset-bottom, 0px)
+        ) !important;
       }
 
       #pg-mushy-chat .wordjar-mushy-msg,
@@ -262,7 +265,7 @@
       MAX_CONTEXT_CHARS
     );
 
-    return `You are Mushy, WordJar's strongest English-learning assistant.\n\nCore role:\n- Act like Gemini-level language tutor for Thai learners.\n- Main language is Thai. Use English only for examples, vocabulary, grammar labels, and quoted text.\n- Be accurate, context-aware, and useful for serious English study.\n- Do not pretend to change app data unless a WordJar function actually does it.\n\nLearner level: ${level}\nTask: ${task}\n\nContext from WordJar, Reader, deck, or previous chat:\n${context || '(no extra context)'}\n\nUser message:\n${question || '(no question provided)'}\n\nAnswer policy:\n- Do not summarize aggressively. Give complete, long-form answers when the user asks for translation, grammar, nuance, or analysis.\n- Preserve paragraph spacing. Use readable Thai paragraphs.\n- Avoid cramped bullet lists unless a list is clearly better.\n- For English text analysis, cover: การแปล, ความหมายในบริบท, คำศัพท์และวลีสำคัญ, grammar / sentence structure, nuance, and extra examples.\n- If the text is long, analyze the most important parts first and say clearly what remains.\n- For vocabulary, explain meaning in context, pronunciation if useful, collocations, register, common mistakes, and 2-4 examples.\n- For grammar, explain the structure, why it is used, and how to reuse it.\n- Match examples to ${level}, but do not oversimplify important nuance.\n- End naturally. Do not force cat roleplay or excessive emoji.\n\nOutput requirements:\n- Use Thai headings only when they improve readability.\n- Never cut off mid-section intentionally.\n- If the API output limit is reached, end with: [กดต่อเพื่อให้ Mushy วิเคราะห์ต่อ]`;
+    return `You are Mushy, WordJar's strongest English-learning assistant.\n\nCore role:\n- Act like a Gemini-level language tutor for Thai learners.\n- Main language is Thai. Use English only for examples, vocabulary, grammar labels, and quoted text.\n- Be accurate, context-aware, and useful for serious English study.\n- Do not pretend to change app data unless a WordJar function actually does it.\n\nLearner level: ${level}\nTask: ${task}\n\nContext from WordJar, Reader, deck, or previous chat:\n${context || '(no extra context)'}\n\nUser message:\n${question || '(no question provided)'}\n\nAnswer policy:\n- Give one complete answer in this response. Do not split the answer into parts.\n- Never write "กดต่อ", "continue", "to be continued", or similar continuation prompts.\n- Do not summarize aggressively unless the user explicitly asks for a short summary.\n- Preserve paragraph spacing. Use readable Thai paragraphs.\n- Avoid cramped bullet lists unless a list is clearly better.\n- For English text analysis, cover: การแปล, ความหมายในบริบท, คำศัพท์และวลีสำคัญ, grammar / sentence structure, nuance, and extra examples.\n- For long source text, still produce the most complete useful answer possible in one response. Prioritize important details, but do not announce that analysis will continue later.\n- For vocabulary, explain meaning in context, pronunciation if useful, collocations, register, common mistakes, and 2-4 examples.\n- For grammar, explain the structure, why it is used, and how to reuse it.\n- Match examples to ${level}, but do not oversimplify important nuance.\n- End naturally. Do not force cat roleplay or excessive emoji.\n\nOutput requirements:\n- Use Thai headings only when they improve readability.\n- Never cut off mid-section intentionally.\n- If the response budget is tight, compress wording instead of asking the user to continue.`;
   }
 
   function geminiEndpoint(model, apiKey) {
@@ -290,7 +293,7 @@
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: options.temperature ?? 0.45,
+            temperature: options.temperature ?? 0.35,
             topP: options.topP ?? 0.95,
             maxOutputTokens: options.maxOutputTokens || MAX_OUTPUT_TOKENS
           }
@@ -328,6 +331,13 @@
     }
   }
 
+  function stripContinuationMarkers(text) {
+    return String(text || '')
+      .replace(/\n?\s*\[?\s*กดต่อ[^\]\n]*\]?\s*$/i, '')
+      .replace(/\n?\s*\[?\s*continue[^\]\n]*\]?\s*$/i, '')
+      .trim();
+  }
+
   function userFacingError(error) {
     const message = String(error?.message || '');
     const apiMessage = String(error?.apiMessage || '');
@@ -359,14 +369,11 @@
           }
         });
 
-        const isTokenCut = String(result.finishReason).toUpperCase() === 'MAX_TOKENS';
-        const suffix = isTokenCut && !result.text.includes('[กดต่อ')
-          ? '\n\n[กดต่อเพื่อให้ Mushy วิเคราะห์ต่อ]'
-          : '';
+        const text = stripContinuationMarkers(result.text);
 
         window.WordJarMushyAI.lastModel = result.model;
         return {
-          text: `${result.text}${suffix}`,
+          text,
           model: result.model,
           cached: false,
           finishReason: result.finishReason
