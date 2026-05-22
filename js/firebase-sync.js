@@ -424,7 +424,8 @@ function loadWordJarLateModules() {
     'js/settings-lazy-loader.js',
     'js/ui-standardize.js',
     'js/performance-scheduler.js',
-    'js/reader-notes-editor-toolbar.js'
+    'js/reader-notes-editor-toolbar.js',
+    'js/wordjar-mushy-long-answer-fix.js'
   ];
 
   const idleModules = [
