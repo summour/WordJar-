@@ -8,8 +8,29 @@
 
   let readerLoadPromise = null;
 
+  function enforceMainNavOrder() {
+    const topNav = document.querySelector('.top-nav');
+    if (!topNav) return;
+
+    [
+      'tb-home',
+      'tb-decks',
+      'tb-words',
+      'tb-reader',
+      'tb-mushy-chat',
+      'tb-account'
+    ].forEach(id => {
+      const button = document.getElementById(id);
+      if (button) topNav.appendChild(button);
+    });
+  }
+
   function injectReaderButton() {
-    if (document.getElementById('tb-reader')) return;
+    if (document.getElementById('tb-reader')) {
+      enforceMainNavOrder();
+      return;
+    }
+
     const wordsBtn = document.getElementById('tb-words');
     if (!wordsBtn) return;
 
@@ -20,6 +41,7 @@
     btn.onclick = () => nav('reader');
     btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v16H6.5A2.5 2.5 0 014 16.5v-11z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>`;
     wordsBtn.insertAdjacentElement('afterend', btn);
+    enforceMainNavOrder();
   }
 
   function markReaderLoading() {
@@ -129,6 +151,8 @@
 
   const originalNav = window.nav;
   window.nav = function navWithLazyReader(page) {
+    enforceMainNavOrder();
+
     if (page !== 'reader') {
       if (typeof originalNav === 'function') originalNav(page);
       return;
@@ -145,4 +169,6 @@
   };
 
   injectReaderButton();
+  setTimeout(enforceMainNavOrder, 0);
+  setTimeout(enforceMainNavOrder, 400);
 })();
