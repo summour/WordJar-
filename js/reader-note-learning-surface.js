@@ -1,4 +1,4 @@
-// WordJar Note Learning Surface V1
+// WordJar Note Learning Surface V2
 // Turns Note Detail into the main reading + learning surface.
 
 (function installReaderNoteLearningSurface() {
@@ -7,8 +7,10 @@
 
   const STYLE_ID = 'readerNoteLearningSurfaceStyle';
   const CUSTOM_SHEET_ID = 'rnCustomSheet';
+  const AI_MODULE = 'js/reader-note-ai-analysis.js';
 
   let activeNoteId = '';
+  let aiLoadPromise = null;
 
   function esc(value) {
     if (typeof escapeHTML === 'function') return escapeHTML(value);
@@ -69,6 +71,11 @@
     return String(note?.text || plainFromHTML(note?.html || '') || '').trim();
   }
 
+  function noteHTML(note) {
+    if (note?.html) return String(note.html || '');
+    return esc(notePlain(note)).replace(/\n/g, '<br>');
+  }
+
   function hashText(text) {
     let hash = 2166136261;
     const source = String(text || '');
@@ -120,6 +127,25 @@
       .rn-learning-banner-sub { margin-top:3px; font-size:12px; line-height:1.35; font-weight:750; color:var(--ink2); }
       .rn-learning-chipline { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 14px; }
       .rn-learning-chip { border:1px solid var(--bdr); border-radius:999px; background:var(--sur); color:var(--ink2); padding:6px 9px; font-size:11px; font-weight:900; }
+      .rn-ai-text { white-space:normal; }
+      .rn-ai-para { margin:0 0 var(--rn-read-gap); }
+      .rn-ai-token { display:inline-flex; flex-direction:column; align-items:center; vertical-align:baseline; border-radius:9px; padding:0 2px; margin:0 1px; cursor:pointer; }
+      .rn-ai-token:active { background:rgba(0,122,255,.12); }
+      .rn-ai-token.focus { box-shadow:0 0 0 1px var(--brand,#2f7cf6) inset; }
+      .rn-ai-ipa { font-size:.68em; line-height:1; color:var(--brand,#2f7cf6); font-weight:850; margin-bottom:1px; }
+      .rn-ai-word { line-height:1.1; }
+      .rn-ai-hint { font-size:.7em; line-height:1.05; color:var(--ink2); font-weight:800; margin-top:2px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .rn-ai-token.inline { display:inline; }
+      .rn-ai-token.inline .rn-ai-ipa { display:inline; margin:0 3px 0 0; }
+      .rn-ai-translation { margin:7px 0 12px; padding:9px 11px; border:1px solid var(--bdr); border-radius:14px; background:var(--sur2); color:var(--ink2); font-size:.88em; font-weight:750; line-height:1.45; }
+      .rn-ai-summary { margin:0 0 14px; border:1px solid var(--bdr); border-radius:18px; background:var(--sur2); padding:12px; }
+      .rn-ai-summary-title { font-size:13px; font-weight:950; color:var(--ink); margin-bottom:5px; }
+      .rn-ai-summary-text { font-size:13px; line-height:1.48; color:var(--ink2); font-weight:750; }
+      .rn-ai-insights { margin-top:16px; border:1px solid var(--bdr); border-radius:18px; background:var(--sur2); overflow:hidden; }
+      .rn-ai-insights-head { padding:12px 13px; font-size:13px; font-weight:950; color:var(--ink); border-bottom:1px solid var(--bdr); }
+      .rn-ai-insight-row { padding:11px 13px; border-bottom:1px solid var(--bdr); font-size:13px; line-height:1.42; color:var(--ink2); }
+      .rn-ai-insight-row:last-child { border-bottom:0; }
+      .rn-ai-insight-row b { color:var(--ink); }
       .rn-custom-backdrop { position:absolute; inset:0; z-index:12; background:rgba(0,0,0,.36); display:flex; align-items:flex-end; }
       .rn-custom-sheet { width:100%; max-height:min(82vh,680px); overflow:auto; border-radius:26px 26px 0 0; border:1px solid var(--bdr); border-bottom:0; background:var(--bg); padding:12px 18px 22px; box-shadow:0 -18px 48px rgba(0,0,0,.18); }
       .rn-custom-grabber { width:42px; height:5px; border-radius:999px; background:var(--ink2); opacity:.55; margin:2px auto 16px; }
@@ -153,8 +179,14 @@
   function analysisBanner(note) {
     const analysis = analysisFor(note);
     if (analysis?.status === 'completed') {
-      const count = analysis.createdFrom === 'placeholder' ? 'structure ready' : 'AI ready';
-      return `<div class="rn-learning-chipline"><span class="rn-learning-chip">${count}</span><span class="rn-learning-chip">${esc(getCustom().ipaStandard)}</span><span class="rn-learning-chip">${esc(getCustom().mode)}</span></div>`;
+      const base = analysis.baseAnalysis || {};
+      const words = Array.isArray(base.vocabulary) ? base.vocabulary.length : 0;
+      const grammar = Array.isArray(base.grammarPoints) ? base.grammarPoints.length : 0;
+      const label = analysis.createdFrom === 'placeholder' ? 'structure ready' : 'AI ready';
+      return `<div class="rn-learning-chipline"><span class="rn-learning-chip">${label}</span><span class="rn-learning-chip">${words} words</span><span class="rn-learning-chip">${grammar} grammar</span><span class="rn-learning-chip">${esc(getCustom().ipaStandard)}</span><span class="rn-learning-chip">${esc(getCustom().mode)}</span></div>`;
+    }
+    if (analysis?.status === 'failed') {
+      return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">AI analysis failed</div><div class="rn-learning-banner-sub">${esc(analysis.error || 'Retry analysis.')}</div></div><button class="rn-text-btn primary" type="button" onclick="analyzeReaderNoteLearning('${esc(note.id)}')">Retry</button></div>`;
     }
     return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">Analyze this note once.</div><div class="rn-learning-banner-sub">This will cache IPA, translation, grammar, CEFR, phrases, and card candidates for this note.</div></div><button class="rn-text-btn primary" type="button" onclick="analyzeReaderNoteLearning('${esc(note.id)}')">Analyze</button></div>`;
   }
@@ -164,6 +196,107 @@
     if (noteId) return noteById(noteId);
     const title = document.querySelector('#readerNotesBody .rn-detail-title')?.textContent || '';
     return D.readerNotes.find(note => String(note.title || '') === title) || null;
+  }
+
+  function vocabularyMap(analysis) {
+    const vocab = analysis?.baseAnalysis?.vocabulary || [];
+    const map = new Map();
+    vocab.forEach(item => {
+      const keys = [item.display, item.lemma]
+        .map(value => String(value || '').toLowerCase().trim())
+        .filter(Boolean);
+      keys.forEach(key => map.set(key, item));
+    });
+    return map;
+  }
+
+  function ipaFor(item, analysis) {
+    const standard = getCustom().ipaStandard;
+    const layered = analysis?.pronunciationLayers?.[standard]?.items?.[item.id];
+    return layered || item.ipa || '';
+  }
+
+  function tokenHTML(word, item, analysis) {
+    const c = getCustom();
+    const classes = ['rn-ai-token'];
+    if (c.ipaPosition === 'inline') classes.push('inline');
+    if (c.focusMode) classes.push('focus');
+
+    const ipa = c.showIPA && c.ipaPosition !== 'popup' ? ipaFor(item, analysis) : '';
+    const meaning = c.showTranslation && c.translationPosition === 'inline'
+      ? item.translationThai || item.meaningInContextThai || ''
+      : '';
+    const cefr = c.showCEFR && item.cefr ? ` · ${item.cefr}` : '';
+    const pos = c.showPOS && item.pos ? ` · ${item.pos}` : '';
+
+    return `<span class="${classes.join(' ')}" data-vocab-id="${esc(item.id || '')}" title="${esc([item.translationThai, item.pos, item.cefr].filter(Boolean).join(' · '))}">${ipa ? `<span class="rn-ai-ipa">${esc(ipa)}</span>` : ''}<span class="rn-ai-word">${esc(word)}</span>${meaning ? `<span class="rn-ai-hint">${esc(meaning)}</span>` : ''}${cefr || pos ? `<span class="rn-ai-hint">${esc(`${pos}${cefr}`.replace(/^ · /, ''))}</span>` : ''}</span>`;
+  }
+
+  function renderParagraphText(text, analysis) {
+    const c = getCustom();
+    if (c.mode === 'clean') return esc(text);
+    const map = vocabularyMap(analysis);
+    const parts = String(text || '').match(/[A-Za-z]+(?:['’-][A-Za-z]+)?|[^A-Za-z]+/g) || [];
+    return parts.map(part => {
+      if (!/^[A-Za-z]+(?:['’-][A-Za-z]+)?$/.test(part)) return esc(part);
+      const item = map.get(part.toLowerCase());
+      if (!item) return esc(part);
+      if (c.targetsOnly && item.isLearningTarget === false) return esc(part);
+      if (c.hideEasyWords && item.showByDefault === false) return esc(part);
+      return tokenHTML(part, item, analysis);
+    }).join('');
+  }
+
+  function sentenceTranslationsHTML(analysis) {
+    const c = getCustom();
+    if (!c.showTranslation || c.translationPosition !== 'sentence') return '';
+    const sentences = analysis?.baseAnalysis?.sentences || [];
+    return sentences.slice(0, 12).map(sentence => {
+      const text = sentence.naturalThai || sentence.translationThai || '';
+      if (!text) return '';
+      return `<div class="rn-ai-translation">${esc(text)}</div>`;
+    }).join('');
+  }
+
+  function insightsHTML(analysis) {
+    const c = getCustom();
+    const base = analysis?.baseAnalysis || {};
+    const rows = [];
+    if (c.showGrammar) {
+      (base.grammarPoints || []).slice(0, 5).forEach(item => {
+        rows.push(`<div class="rn-ai-insight-row"><b>${esc(item.title || item.pattern || 'Grammar')}</b><br>${esc(item.explanationThai || item.pattern || '')}</div>`);
+      });
+    }
+    if (c.showPhrases) {
+      (base.phrases || []).slice(0, 5).forEach(item => {
+        rows.push(`<div class="rn-ai-insight-row"><b>${esc(item.text || 'Phrase')}</b><br>${esc(item.meaningThai || item.translationThai || '')}</div>`);
+      });
+    }
+    if (!rows.length) return '';
+    return `<div class="rn-ai-insights"><div class="rn-ai-insights-head">Learning notes</div>${rows.join('')}</div>`;
+  }
+
+  function summaryHTML(analysis) {
+    const doc = analysis?.document || {};
+    const text = doc.summaryThai || doc.summarySimple || '';
+    if (!text || getCustom().mode === 'clean') return '';
+    return `<div class="rn-ai-summary"><div class="rn-ai-summary-title">Summary</div><div class="rn-ai-summary-text">${esc(text)}</div></div>`;
+  }
+
+  function renderLearningBody(note, body) {
+    const analysis = analysisFor(note);
+    const c = getCustom();
+    if (!analysis || analysis.status !== 'completed' || c.mode === 'clean') {
+      body.innerHTML = noteHTML(note);
+      return;
+    }
+
+    const paragraphs = notePlain(note)
+      .split(/\n{2,}|\n/)
+      .map(part => part.trim())
+      .filter(Boolean);
+    const rendered = paragraphs.map(part => `<p class="rn-ai-para">${renderParagraphText(part, analysis)}</p>`).join('');
+    body.innerHTML = `${summaryHTML(analysis)}<div class="rn-ai-text">${rendered}</div>${sentenceTranslationsHTML(analysis)}${insightsHTML(analysis)}`;
   }
 
   function patchDetailDOM() {
@@ -185,9 +318,12 @@
     if (!actions.querySelector('#rnCustomBtn')) {
       actions.insertAdjacentHTML('afterbegin', `<button id="rnCustomBtn" class="rn-text-btn rn-aa-btn" type="button" onclick="openReaderNoteCustomSheet('${esc(note.id)}')">Aa</button>`);
     }
-    if (!document.getElementById('rnLearningBanner')) {
-      body.insertAdjacentHTML('beforebegin', `<div id="rnLearningBanner">${analysisBanner(note)}</div>`);
-    }
+
+    const banner = document.getElementById('rnLearningBanner');
+    if (banner) banner.innerHTML = analysisBanner(note);
+    else body.insertAdjacentHTML('beforebegin', `<div id="rnLearningBanner">${analysisBanner(note)}</div>`);
+
+    renderLearningBody(note, body);
   }
 
   function selectedClass(value, option) {
@@ -219,6 +355,16 @@
   function saveNow() {
     if (typeof save === 'function') save();
     setTimeout(patchDetailDOM, 0);
+  }
+
+  function loadAIAnalysisModule() {
+    if (window.__wordjarReaderNoteAIAnalysisInstalled) return Promise.resolve();
+    if (aiLoadPromise) return aiLoadPromise;
+    if (typeof loadWordJarModule !== 'function') return Promise.resolve();
+    aiLoadPromise = loadWordJarModule(AI_MODULE).catch(err => {
+      console.warn('Reader note AI module failed to load', err);
+    });
+    return aiLoadPromise;
   }
 
   function patchMenu() {
@@ -261,30 +407,39 @@
     openReaderNoteCustomSheet(activeNoteId);
   };
 
-  window.analyzeReaderNoteLearning = function analyzeReaderNoteLearning(noteId = activeNoteId) {
-    const note = noteById(noteId);
-    if (!note) return;
-    D.readerNoteAnalyses[analysisKey(note)] = {
-      status: 'completed',
-      createdFrom: 'placeholder',
-      noteId: note.id,
-      contentHash: hashText(notePlain(note)),
-      config: { ...getCustom() },
-      document: {},
-      baseAnalysis: { sentences: [], vocabulary: [], grammarPoints: [], phrases: [], learningTargets: [], cardCandidates: [] },
-      pronunciationLayers: { [getCustom().ipaStandard]: { status: 'not_generated', items: {} } }
-    };
-    saveNow();
-    const banner = document.getElementById('rnLearningBanner');
-    if (banner) banner.innerHTML = analysisBanner(note);
-    toastSafe('Learning cache structure created');
-  };
+  function fallbackAnalyze(noteId = activeNoteId) {
+    loadAIAnalysisModule().then(() => {
+      if (window.analyzeReaderNoteLearning !== fallbackAnalyze) {
+        window.analyzeReaderNoteLearning(noteId);
+        return;
+      }
+      const note = noteById(noteId);
+      if (!note) return;
+      D.readerNoteAnalyses[analysisKey(note)] = {
+        status: 'completed',
+        createdFrom: 'placeholder',
+        noteId: note.id,
+        contentHash: hashText(notePlain(note)),
+        config: { ...getCustom() },
+        document: {},
+        baseAnalysis: { sentences: [], vocabulary: [], grammarPoints: [], phrases: [], learningTargets: [], cardCandidates: [] },
+        pronunciationLayers: { [getCustom().ipaStandard]: { status: 'not_generated', items: {} } }
+      };
+      saveNow();
+      toastSafe('Learning cache structure created');
+    });
+  }
+
+  window.analyzeReaderNoteLearning = fallbackAnalyze;
 
   window.reanalyzeReaderNoteLearning = function reanalyzeReaderNoteLearning(noteId = activeNoteId) {
-    const note = noteById(noteId);
-    if (!note) return;
-    delete D.readerNoteAnalyses[analysisKey(note)];
-    window.analyzeReaderNoteLearning(noteId);
+    loadAIAnalysisModule().then(() => {
+      const note = noteById(noteId);
+      if (!note) return;
+      delete D.readerNoteAnalyses[analysisKey(note)];
+      if (typeof save === 'function') save();
+      window.analyzeReaderNoteLearning(noteId);
+    });
   };
 
   window.clearReaderNoteAnalysis = function clearReaderNoteAnalysis(noteId = activeNoteId) {
@@ -292,18 +447,23 @@
     if (!note) return;
     delete D.readerNoteAnalyses[analysisKey(note)];
     saveNow();
-    const banner = document.getElementById('rnLearningBanner');
-    if (banner) banner.innerHTML = analysisBanner(note);
     toastSafe('Analysis cache cleared');
   };
 
-  window.updateReaderNoteIPAOnly = function updateReaderNoteIPAOnly() {
-    toastSafe('IPA-only generation is reserved for the AI layer step');
+  window.updateReaderNoteIPAOnly = function updateReaderNoteIPAOnly(noteId = activeNoteId) {
+    loadAIAnalysisModule().then(() => {
+      if (window.__wordjarReaderNoteAIAnalysisInstalled) {
+        window.updateReaderNoteIPAOnly(noteId);
+        return;
+      }
+      toastSafe('Analyze the note first');
+    });
   };
 
   function boot() {
     ensureData();
     injectStyles();
+    loadAIAnalysisModule();
     const root = document.getElementById('readerNotesBody') || document.body;
     new MutationObserver(() => setTimeout(() => { patchDetailDOM(); patchMenu(); }, 0))
       .observe(root, { childList: true, subtree: true });
