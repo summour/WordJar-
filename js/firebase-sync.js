@@ -425,6 +425,7 @@ function loadWordJarLateModules() {
     'js/ui-standardize.js',
     'js/performance-scheduler.js',
     'js/reader-notes-editor-toolbar.js',
+    'js/reader-note-learning-surface.js',
     'js/wordjar-mushy-long-answer-fix.js'
   ];
 
