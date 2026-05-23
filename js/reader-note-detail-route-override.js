@@ -1,8 +1,9 @@
-// WordJar Reader Note Detail Route Override V2
+// WordJar Reader Note Detail Route Override V3
 // Renders the new Learning Note Detail directly and avoids the old detail route.
 
 (function installReaderNoteDetailRouteOverride() {
-  if (window.__wordjarReaderNoteDetailRouteOverrideInstalledV2) return;
+  if (window.__wordjarReaderNoteDetailRouteOverrideInstalledV3) return;
+  window.__wordjarReaderNoteDetailRouteOverrideInstalledV3 = true;
   window.__wordjarReaderNoteDetailRouteOverrideInstalledV2 = true;
   window.__wordjarReaderNoteDetailRouteOverrideInstalled = true;
 
@@ -39,7 +40,7 @@
       ipaPosition: 'above',
       ipaStandard: 'en-US',
       showTranslation: true,
-      translationPosition: 'popup',
+      translationPosition: 'sentence',
       translationStyle: 'natural',
       showGrammar: false,
       showCEFR: false,
@@ -154,6 +155,11 @@
       #readerNotesPage .rn-learning-banner-sub{margin-top:3px;font-size:12px;line-height:1.35;font-weight:750;color:var(--ink2)}
       #readerNotesPage .rn-learning-chipline{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
       #readerNotesPage .rn-learning-chip{border:1px solid var(--bdr);border-radius:999px;background:var(--sur);color:var(--ink2);padding:6px 9px;font-size:11px;font-weight:900}
+      #readerNotesPage .rn-sentence-list{display:flex;flex-direction:column;gap:18px;margin-top:10px;padding-bottom:92px}
+      #readerNotesPage .rn-sentence-block{border-radius:18px;padding:0;background:transparent}
+      #readerNotesPage .rn-sentence-en{font-size:1em;line-height:1.72;color:var(--ink);font-weight:760;letter-spacing:-.012em}
+      #readerNotesPage .rn-translation-th{margin-top:8px;border:1px solid var(--bdr);border-radius:16px;background:var(--sur2);padding:10px 12px;color:var(--ink2);font-size:.9em;line-height:1.58;font-weight:750}
+      #readerNotesPage .rn-translation-th:empty{display:none}
       #readerNotesPage .rn-core-custom-backdrop{position:absolute;inset:0;z-index:100020;background:rgba(0,0,0,.34);display:flex;align-items:flex-end}
       #readerNotesPage .rn-core-custom-sheet{width:100%;max-height:min(82vh,680px);overflow:auto;border-radius:26px 26px 0 0;border:1px solid var(--bdr);border-bottom:0;background:var(--bg);padding:12px 18px 22px;box-shadow:0 -18px 48px rgba(0,0,0,.18)}
       #readerNotesPage .rn-core-grabber{width:42px;height:5px;border-radius:999px;background:var(--ink2);opacity:.55;margin:2px auto 16px}
@@ -167,7 +173,6 @@
       #readerNotesPage .rn-core-row{min-height:54px;display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:1px solid var(--bdr);background:transparent;color:var(--ink);width:100%;text-align:left}
       #readerNotesPage .rn-core-row:last-child{border-bottom:0}
       #readerNotesPage .rn-core-label{color:var(--ink);font-size:15px;font-weight:900}
-      #readerNotesPage .rn-core-sub{display:block;color:var(--ink2);font-size:12px;font-weight:750;margin-top:2px}
       #readerNotesPage .rn-core-select{min-width:138px;min-height:36px;border:1px solid var(--bdr);border-radius:12px;background:var(--sur);color:var(--ink);padding:0 10px;font-size:13px;font-weight:850}
       #readerNotesPage .rn-core-toggle{width:52px;height:32px;border:1px solid var(--bdr);border-radius:999px;background:var(--sur2);padding:3px;display:flex;align-items:center;justify-content:flex-start}
       #readerNotesPage .rn-core-toggle.on{justify-content:flex-end;background:var(--brand,#2f7cf6)}
@@ -180,17 +185,31 @@
     const analysis = analysisFor(note);
     if (analysis?.status === 'completed') {
       const base = analysis.baseAnalysis || {};
-      const words = Array.isArray(base.vocabulary) ? base.vocabulary.length : 0;
-      const grammar = Array.isArray(base.grammarPoints) ? base.grammarPoints.length : 0;
-      return `<div class="rn-learning-chipline"><span class="rn-learning-chip">AI ready</span><span class="rn-learning-chip">${words} words</span><span class="rn-learning-chip">${grammar} grammar</span><span class="rn-learning-chip">${esc(custom().ipaStandard)}</span></div>`;
+      const sentences = Array.isArray(base.sentences) ? base.sentences.length : 0;
+      const ipa = Array.isArray(base.vocabulary) ? base.vocabulary.length : 0;
+      return `<div class="rn-learning-chipline"><span class="rn-learning-chip">AI ready</span><span class="rn-learning-chip">${sentences} sentences</span><span class="rn-learning-chip">${ipa} IPA</span><span class="rn-learning-chip">${esc(analysis.model || custom().ipaStandard)}</span></div>`;
     }
     if (analysis?.status === 'failed') {
       return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">AI analysis failed</div><div class="rn-learning-banner-sub">${esc(analysis.error || 'Retry analysis.')}</div></div><button class="rn-btn primary" type="button" data-rn-analyze="${esc(note.id)}">Retry</button></div>`;
     }
-    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">Analyze this note once.</div><div class="rn-learning-banner-sub">Cache IPA, translation, grammar, CEFR, phrases, and card candidates for this note.</div></div><button class="rn-btn primary" type="button" data-rn-analyze="${esc(note.id)}">Analyze</button></div>`;
+    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">Analyze this note once.</div><div class="rn-learning-banner-sub">Create sentence translations and IPA for this note.</div></div><button class="rn-btn primary" type="button" data-rn-analyze="${esc(note.id)}">Analyze</button></div>`;
+  }
+
+  function translatedSentenceHTML(item) {
+    const translation = String(item.naturalThai || item.translationThai || item.thai || '').trim();
+    return `<section class="rn-sentence-block"><div class="rn-sentence-en">${esc(item.text || '')}</div>${translation ? `<div class="rn-translation-th">${esc(translation)}</div>` : ''}</section>`;
+  }
+
+  function translatedBodyHTML(note, analysis) {
+    const sentences = analysis?.baseAnalysis?.sentences || [];
+    const usable = sentences.filter(item => item?.text);
+    if (!custom().showTranslation || !usable.length) return safeHTML(note);
+    return `<div class="rn-sentence-list">${usable.map(translatedSentenceHTML).join('')}</div>`;
   }
 
   function bodyHTML(note) {
+    const analysis = analysisFor(note);
+    if (analysis?.status === 'completed') return translatedBodyHTML(note, analysis);
     return safeHTML(note);
   }
 
@@ -243,7 +262,7 @@
       <div class="rn-core-section"><div class="rn-core-section-title">Text</div>${optionRow('fontSize','Font Size',[{value:'small',label:'Small'},{value:'regular',label:'Regular'},{value:'large',label:'Large'},{value:'xlarge',label:'Extra Large'}])}${optionRow('lineHeight','Line Height',[{value:'compact',label:'Compact'},{value:'regular',label:'Regular'},{value:'comfortable',label:'Comfortable'}])}${optionRow('paragraphGap','Paragraph Spacing',[{value:'compact',label:'Compact'},{value:'regular',label:'Regular'},{value:'wide',label:'Wide'}])}${optionRow('theme','Theme',[{value:'light',label:'Light'},{value:'warm',label:'Warm'},{value:'dark',label:'Dark'}])}</div>
       <div class="rn-core-section"><div class="rn-core-section-title">Learning Layer</div>${toggleRow('showIPA','IPA')}${toggleRow('showTranslation','Translation')}${toggleRow('showGrammar','Grammar Hints')}${toggleRow('showCEFR','CEFR Level')}${toggleRow('showPOS','Part of Speech')}${toggleRow('showPhrases','Phrase Highlights')}</div>
       <div class="rn-core-section"><div class="rn-core-section-title">Pronunciation</div>${optionRow('ipaStandard','Standard',[{value:'en-US',label:'American English'},{value:'en-GB',label:'British English'},{value:'en-RP',label:'Received Pronunciation'}])}${optionRow('ipaPosition','IPA Position',[{value:'above',label:'Above word'},{value:'below',label:'Below word'},{value:'inline',label:'Inline'},{value:'popup',label:'Popup only'}])}</div>
-      <div class="rn-core-section"><div class="rn-core-section-title">Translation</div>${optionRow('translationPosition','Position',[{value:'popup',label:'Popup only'},{value:'sentence',label:'Under sentence'},{value:'paragraph',label:'Under paragraph'},{value:'inline',label:'Inline hint'}])}${optionRow('translationStyle','Style',[{value:'natural',label:'Natural'},{value:'literal',label:'Literal'},{value:'learning',label:'Learning-friendly'}])}</div>
+      <div class="rn-core-section"><div class="rn-core-section-title">Translation</div>${optionRow('translationPosition','Position',[{value:'sentence',label:'Under sentence'},{value:'popup',label:'Popup only'}])}${optionRow('translationStyle','Style',[{value:'natural',label:'Natural'},{value:'literal',label:'Literal'},{value:'learning',label:'Learning-friendly'}])}</div>
     </div></div>`;
   }
 
@@ -329,7 +348,7 @@
 
   function overrideHandleRow() {
     if (typeof window.handleReaderNoteRow !== 'function') return;
-    if (window.handleReaderNoteRow.__learningRouteV2) return;
+    if (window.handleReaderNoteRow.__learningRouteV3) return;
 
     originalHandleRow = originalHandleRow || window.handleReaderNoteRow;
     const next = function handleReaderNoteRowLearningRoute(id) {
@@ -337,6 +356,7 @@
       if (isSelecting && originalHandleRow) return originalHandleRow.apply(this, arguments);
       renderLearningDetail(id);
     };
+    next.__learningRouteV3 = true;
     next.__learningRouteV2 = true;
     window.handleReaderNoteRow = next;
   }
