@@ -1,14 +1,13 @@
-// WordJar Reader Note AI Analysis V5
-// Stable first pass: sentence translations only, using a plain text protocol.
+// WordJar Reader Note AI Analysis V6
+// First stable pass: translate the full note in one Gemini call.
 
 (function installReaderNoteAIAnalysis() {
-  if (window.__wordjarReaderNoteAIAnalysisInstalledV5) return;
-  window.__wordjarReaderNoteAIAnalysisInstalledV5 = true;
+  if (window.__wordjarReaderNoteAIAnalysisInstalledV6) return;
+  window.__wordjarReaderNoteAIAnalysisInstalledV6 = true;
   window.__wordjarReaderNoteAIAnalysisInstalled = true;
 
   const API_VERSION = 'v1beta';
   const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
-  const MAX_NOTE_CHARS = 9000;
   let isRunning = false;
 
   function ensureData() {
@@ -92,67 +91,29 @@
     return Array.isArray(value) ? value : [];
   }
 
-  function splitSentences(text) {
-    return String(text || '')
-      .replace(/\s+/g, ' ')
-      .split(/(?<=[.!?])\s+(?=["'“”‘’A-Z0-9])/)
-      .map(value => value.trim())
-      .filter(Boolean);
-  }
-
-  function buildSentencePayload(note) {
-    const source = notePlain(note).slice(0, MAX_NOTE_CHARS);
-    return splitSentences(source).slice(0, 80).map((text, index) => ({
-      id: `s${index + 1}`,
-      text
-    }));
-  }
-
   function buildPrompt(note, custom) {
-    const sentences = buildSentencePayload(note);
-    const lines = sentences.map(item => `${item.id}\t${item.text}`).join('\n');
     return [
-      'Translate English sentences into natural Thai for a Thai learner.',
-      'Return ONLY lines in this exact format:',
-      's1<TAB>Thai translation',
-      's2<TAB>Thai translation',
-      'Do not return JSON. Do not return markdown. Do not add bullets.',
-      'Keep each id exactly the same. One output line per input line.',
+      'Translate the full English note below into natural Thai.',
+      'Return only the Thai translation. Do not return JSON.',
+      'Do not add markdown, labels, comments, bullets, or explanations.',
+      'Preserve paragraph breaks as much as possible.',
       `Translation style: ${custom.translationStyle}.`,
       '',
-      'INPUT:',
-      lines
+      'ENGLISH NOTE:',
+      notePlain(note)
     ].join('\n');
   }
 
-  function parseTranslationLines(output, sentencePayload) {
-    const map = new Map();
-    String(output || '').split(/\n+/).forEach(rawLine => {
-      const line = rawLine.trim();
-      if (!line) return;
-
-      const tabParts = line.split('\t');
-      if (tabParts.length >= 2 && /^s\d+$/i.test(tabParts[0].trim())) {
-        map.set(tabParts[0].trim().toLowerCase(), tabParts.slice(1).join('\t').trim());
-        return;
-      }
-
-      const match = line.match(/^(s\d+)\s*[:：\-–—|]\s*(.+)$/i);
-      if (match) map.set(match[1].toLowerCase(), match[2].trim());
-    });
-
-    return sentencePayload.map(item => ({
-      id: item.id,
-      text: item.text,
-      translationThai: map.get(item.id.toLowerCase()) || '',
-      naturalThai: map.get(item.id.toLowerCase()) || '',
-      grammarPointIds: []
-    }));
+  function normalizeTranslation(text) {
+    return String(text || '')
+      .replace(/^```(?:text|thai)?\s*/i, '')
+      .replace(/```$/i, '')
+      .replace(/^\s*(คำแปลไทย|คำแปล|Thai translation|Translation)\s*[:：]\s*/i, '')
+      .trim();
   }
 
   function normalizeAnalysis(note, output, model) {
-    const sentencePayload = buildSentencePayload(note);
-    const sentences = parseTranslationLines(output, sentencePayload);
+    const translationThai = normalizeTranslation(output);
 
     return {
       status: 'completed',
@@ -160,10 +121,10 @@
       contentHash: hashText(notePlain(note)),
       model: model || window.WordJarAIConfig?.lastModel || 'Gemini',
       analyzedAt: new Date().toISOString(),
-      config: { ...getCustom(), scope: 'sentence_translation' },
-      document: {},
+      config: { ...getCustom(), scope: 'full_note_translation' },
+      document: { translationThai },
       baseAnalysis: {
-        sentences,
+        sentences: [],
         vocabulary: [],
         grammarPoints: [],
         phrases: [],
@@ -188,8 +149,8 @@
     return {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
-        temperature: 0.1,
-        topP: 0.8,
+        temperature: 0.2,
+        topP: 0.9,
         maxOutputTokens
       }
     };
@@ -197,7 +158,7 @@
 
   async function callGeminiModel({ apiKey, model, prompt, maxOutputTokens }) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 45000);
+    const timer = setTimeout(() => controller.abort(), 70000);
     try {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/${API_VERSION}/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
@@ -226,7 +187,7 @@
     }
   }
 
-  async function callAI(prompt, maxOutputTokens = 5000) {
+  async function callAI(prompt, maxOutputTokens = 12000) {
     const apiKey = await ensureApiKey();
     let lastError = null;
     for (const model of MODELS) {
@@ -234,7 +195,7 @@
         return await callGeminiModel({ apiKey, model, prompt, maxOutputTokens });
       } catch (err) {
         lastError = err;
-        console.warn(`Reader Note translation failed with ${model}`, err);
+        console.warn(`Reader Note full translation failed with ${model}`, err);
         if (!shouldTryNextModel(err)) break;
       }
     }
@@ -247,13 +208,12 @@
   }
 
   function loadingBanner(message) {
-    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">${esc(message)}</div><div class="rn-learning-banner-sub">Gemini is creating sentence translations.</div></div></div>`;
+    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">${esc(message)}</div><div class="rn-learning-banner-sub">Gemini is translating the full note in one request.</div></div></div>`;
   }
 
   function readyBanner(result) {
-    const sentences = cleanArray(result?.baseAnalysis?.sentences);
-    const translated = sentences.filter(item => item.translationThai || item.naturalThai).length;
-    return `<div class="rn-learning-chipline"><span class="rn-learning-chip">Translation ready</span><span class="rn-learning-chip">${translated}/${sentences.length} sentences</span><span class="rn-learning-chip">${esc(result.model || 'Gemini')}</span></div>`;
+    const length = String(result?.document?.translationThai || '').length;
+    return `<div class="rn-learning-chipline"><span class="rn-learning-chip">Translation ready</span><span class="rn-learning-chip">${length} chars</span><span class="rn-learning-chip">${esc(result.model || 'Gemini')}</span></div>`;
   }
 
   function failedBanner(message, noteId) {
@@ -267,7 +227,7 @@
   }
 
   async function analyzeNote(note) {
-    const { text, model } = await callAI(buildPrompt(note, getCustom()), 5000);
+    const { text, model } = await callAI(buildPrompt(note, getCustom()), 12000);
     return normalizeAnalysis(note, text, model);
   }
 
@@ -312,6 +272,6 @@
   };
 
   window.updateReaderNoteIPAOnly = function updateReaderNoteIPAOnly() {
-    toastSafe('IPA will be added after sentence translation is stable.');
+    toastSafe('IPA will be added after full-note translation is stable.');
   };
 })();
