@@ -1,14 +1,14 @@
-// WordJar Reader Note AI Analysis V3
-// Gemini batch analysis for the Learning Note Detail page.
+// WordJar Reader Note AI Analysis V4
+// Stable first pass: sentence translations + IPA only.
 
 (function installReaderNoteAIAnalysis() {
-  if (window.__wordjarReaderNoteAIAnalysisInstalledV3) return;
-  window.__wordjarReaderNoteAIAnalysisInstalledV3 = true;
+  if (window.__wordjarReaderNoteAIAnalysisInstalledV4) return;
+  window.__wordjarReaderNoteAIAnalysisInstalledV4 = true;
   window.__wordjarReaderNoteAIAnalysisInstalled = true;
 
   const API_VERSION = 'v1beta';
   const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
-  const MAX_NOTE_CHARS = 12000;
+  const MAX_NOTE_CHARS = 9000;
   let isRunning = false;
 
   function ensureData() {
@@ -47,8 +47,7 @@
   function currentNoteId() {
     const page = document.getElementById('readerNotesPage');
     return page?.dataset?.learningNoteId ||
-      page?.querySelector('.rn-learning-core')?.dataset?.noteId ||
-      '';
+      page?.querySelector('.rn-learning-core')?.dataset?.noteId || '';
   }
 
   function noteById(id) {
@@ -93,12 +92,16 @@
   function extractJSON(text) {
     const raw = String(text || '').trim();
     if (!raw) throw new Error('EMPTY_AI_RESPONSE');
+
     try { return JSON.parse(raw); } catch (err) {}
+
     const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
     if (fenced?.[1]) return JSON.parse(fenced[1].trim());
+
     const start = raw.indexOf('{');
     const end = raw.lastIndexOf('}');
     if (start >= 0 && end > start) return JSON.parse(raw.slice(start, end + 1));
+
     throw new Error('INVALID_AI_JSON');
   }
 
@@ -106,23 +109,59 @@
     return Array.isArray(value) ? value : [];
   }
 
+  function splitSentences(text) {
+    return String(text || '')
+      .replace(/\s+/g, ' ')
+      .split(/(?<=[.!?])\s+(?=["'“”‘’A-Z0-9])/)
+      .map(value => value.trim())
+      .filter(Boolean);
+  }
+
+  function buildSentencePayload(note) {
+    const source = notePlain(note).slice(0, MAX_NOTE_CHARS);
+    return splitSentences(source).slice(0, 80).map((text, index) => ({
+      id: `s${index + 1}`,
+      text
+    }));
+  }
+
+  function buildPrompt(note, custom) {
+    const sentences = buildSentencePayload(note);
+    return [
+      'You are an English learning assistant for Thai learners.',
+      'Return ONLY valid minified JSON. No markdown. No comments.',
+      'Do not add keys outside the schema.',
+      `IPA standard: ${custom.ipaStandard}.`,
+      'Task: translate each sentence into natural Thai and provide IPA only for useful English words.',
+      'Do not analyze grammar yet. Do not create flashcards yet.',
+      'Limit IPA words to important/content words only. Skip easy function words unless useful.',
+      'Schema:',
+      '{"schemaVersion":2,"sentences":[{"id":"s1","text":"original sentence","translationThai":"natural Thai translation"}],"ipa":[{"word":"feel","ipa":"/fiːl/"}]}',
+      'Sentences JSON:',
+      JSON.stringify(sentences)
+    ].join('\n');
+  }
+
   function normalizeAnalysis(note, raw, model) {
-    const base = raw?.baseAnalysis || {};
-    const vocabulary = cleanArray(base.vocabulary)
-      .filter(item => item && (item.lemma || item.display || item.translationThai))
+    const sentenceFallback = buildSentencePayload(note).map(item => ({
+      ...item,
+      translationThai: ''
+    }));
+    const sentences = cleanArray(raw?.sentences).length
+      ? cleanArray(raw.sentences)
+      : sentenceFallback;
+    const ipaItems = cleanArray(raw?.ipa)
+      .filter(item => item && (item.word || item.lemma) && item.ipa)
       .map((item, index) => ({
-        id: String(item.id || item.lemma || item.display || `v_${index + 1}`),
-        lemma: String(item.lemma || item.display || '').trim(),
-        display: String(item.display || item.lemma || '').trim(),
+        id: `ipa_${index + 1}_${String(item.word || item.lemma).toLowerCase().replace(/[^a-z0-9]+/g, '_')}`,
+        lemma: String(item.word || item.lemma || '').trim(),
+        display: String(item.word || item.lemma || '').trim(),
         ipa: String(item.ipa || '').trim(),
-        ipaStandard: String(item.ipaStandard || getCustom().ipaStandard),
-        pos: String(item.pos || '').trim(),
-        cefr: String(item.cefr || '').trim(),
-        translationThai: String(item.translationThai || '').trim(),
-        meaningInContextThai: String(item.meaningInContextThai || '').trim(),
-        exampleFromText: String(item.exampleFromText || '').trim(),
-        showByDefault: item.showByDefault !== false,
-        isLearningTarget: item.isLearningTarget !== false
+        ipaStandard: getCustom().ipaStandard,
+        translationThai: '',
+        meaningInContextThai: '',
+        showByDefault: true,
+        isLearningTarget: true
       }));
 
     return {
@@ -131,46 +170,29 @@
       contentHash: hashText(notePlain(note)),
       model: model || window.WordJarAIConfig?.lastModel || 'Gemini',
       analyzedAt: new Date().toISOString(),
-      config: { ...getCustom() },
-      document: raw?.document || {},
+      config: { ...getCustom(), scope: 'sentences_and_ipa' },
+      document: {},
       baseAnalysis: {
-        sentences: cleanArray(base.sentences),
-        vocabulary,
-        grammarPoints: cleanArray(base.grammarPoints),
-        phrases: cleanArray(base.phrases),
-        learningTargets: cleanArray(base.learningTargets),
-        cardCandidates: cleanArray(base.cardCandidates)
+        sentences: sentences.map((item, index) => ({
+          id: String(item.id || `s${index + 1}`),
+          text: String(item.text || '').trim(),
+          translationThai: String(item.translationThai || item.thai || '').trim(),
+          naturalThai: String(item.naturalThai || item.translationThai || item.thai || '').trim(),
+          grammarPointIds: []
+        })),
+        vocabulary: ipaItems,
+        grammarPoints: [],
+        phrases: [],
+        learningTargets: [],
+        cardCandidates: []
       },
       pronunciationLayers: {
         [getCustom().ipaStandard]: {
           status: 'completed',
-          items: Object.fromEntries(vocabulary.map(item => [item.id, item.ipa || '']))
+          items: Object.fromEntries(ipaItems.map(item => [item.id, item.ipa || '']))
         }
       }
     };
-  }
-
-  function buildBatchPrompt(note, custom) {
-    const text = notePlain(note).slice(0, MAX_NOTE_CHARS);
-    return [
-      'You are an English learning analyzer for Thai learners.',
-      'Return valid JSON only. Do not use markdown.',
-      `Pronunciation standard: ${custom.ipaStandard}.`,
-      `Translation style: ${custom.translationStyle}.`,
-      'Target language: Thai.',
-      '',
-      'Analyze the note once for a language-learning reader.',
-      'Include IPA and translations based on meaning in context.',
-      'Deduplicate vocabulary by lemma, part of speech, and meaning sense.',
-      'If one lemma has multiple meanings, create separate vocabulary records.',
-      'Choose useful learning targets; skip easy stop words by default.',
-      '',
-      'Schema:',
-      '{"schemaVersion":1,"document":{"summaryThai":"","summarySimple":"","tone":"","detectedLevel":"A1|A2|B1|B2|C1|C2","mainIdeas":[""]},"baseAnalysis":{"sentences":[{"id":"s1","text":"","translationThai":"","naturalThai":"","level":"","grammarPointIds":["g1"]}],"vocabulary":[{"id":"v_word_sense","lemma":"","display":"","ipa":"","ipaStandard":"","pos":"","cefr":"","translationThai":"","meaningInContextThai":"","exampleFromText":"","showByDefault":true,"isLearningTarget":true}],"grammarPoints":[{"id":"g1","title":"","pattern":"","level":"","explanationThai":"","examplesFromText":[""]}],"phrases":[{"text":"","translationThai":"","meaningThai":"","exampleFromText":""}],"learningTargets":[{"type":"vocabulary|grammar|phrase","id":"","priority":90,"reasonThai":""}],"cardCandidates":[{"type":"vocabulary|phrase|grammar","front":"","back":"","ipa":"","pos":"","cefr":"","example":"","note":""}]}}',
-      '',
-      'Note text:',
-      text
-    ].join('\n');
   }
 
   function shouldTryNextModel(error) {
@@ -187,7 +209,7 @@
     const body = {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
-        temperature: 0.2,
+        temperature: 0.1,
         topP: 0.8,
         maxOutputTokens
       }
@@ -227,7 +249,7 @@
     }
   }
 
-  async function callAI(prompt, maxOutputTokens = 8192) {
+  async function callAI(prompt, maxOutputTokens = 6000) {
     if (window.WordJarAIConfig?.callHighEndGemini) {
       try {
         const text = await WordJarAIConfig.callHighEndGemini(prompt, {
@@ -237,7 +259,7 @@
         });
         return { text, model: window.WordJarAIConfig.lastModel || 'Gemini' };
       } catch (err) {
-        if (!shouldTryNextModel(err)) throw err;
+        if (!shouldTryNextModel(err) && !String(err.message || '').includes('INVALID')) throw err;
       }
     }
 
@@ -269,12 +291,12 @@
   }
 
   function loadingBanner(message) {
-    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">${esc(message)}</div><div class="rn-learning-banner-sub">Gemini is creating the learning cache.</div></div></div>`;
+    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">${esc(message)}</div><div class="rn-learning-banner-sub">Gemini is creating sentence translations and IPA.</div></div></div>`;
   }
 
   function readyBanner(result) {
     const base = result?.baseAnalysis || {};
-    return `<div class="rn-learning-chipline"><span class="rn-learning-chip">AI ready</span><span class="rn-learning-chip">${cleanArray(base.vocabulary).length} words</span><span class="rn-learning-chip">${cleanArray(base.grammarPoints).length} grammar</span><span class="rn-learning-chip">${esc(result.model || 'Gemini')}</span></div>`;
+    return `<div class="rn-learning-chipline"><span class="rn-learning-chip">AI ready</span><span class="rn-learning-chip">${cleanArray(base.sentences).length} sentences</span><span class="rn-learning-chip">${cleanArray(base.vocabulary).length} IPA</span><span class="rn-learning-chip">${esc(result.model || 'Gemini')}</span></div>`;
   }
 
   function failedBanner(message, noteId) {
@@ -288,7 +310,7 @@
   }
 
   async function analyzeNote(note) {
-    const { text, model } = await callAI(buildBatchPrompt(note, getCustom()), 8192);
+    const { text, model } = await callAI(buildPrompt(note, getCustom()), 6000);
     return normalizeAnalysis(note, extractJSON(text), model);
   }
 
@@ -333,6 +355,6 @@
   };
 
   window.updateReaderNoteIPAOnly = function updateReaderNoteIPAOnly() {
-    toastSafe('IPA-only update will be added after the base analysis is stable.');
+    toastSafe('IPA is included in the base sentence analysis.');
   };
 })();
