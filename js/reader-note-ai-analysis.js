@@ -1,11 +1,13 @@
-// WordJar Reader Note AI Analysis V2
-// Adds real Gemini batch analysis to the Note Detail learning surface.
+// WordJar Reader Note AI Analysis V3
+// Gemini batch analysis for the Learning Note Detail page.
 
 (function installReaderNoteAIAnalysis() {
-  if (window.__wordjarReaderNoteAIAnalysisInstalled) return;
+  if (window.__wordjarReaderNoteAIAnalysisInstalledV3) return;
+  window.__wordjarReaderNoteAIAnalysisInstalledV3 = true;
   window.__wordjarReaderNoteAIAnalysisInstalled = true;
 
-  const MODEL = 'gemini-1.5-flash';
+  const API_VERSION = 'v1beta';
+  const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
   const MAX_NOTE_CHARS = 12000;
   let isRunning = false;
 
@@ -46,7 +48,6 @@
     const page = document.getElementById('readerNotesPage');
     return page?.dataset?.learningNoteId ||
       page?.querySelector('.rn-learning-core')?.dataset?.noteId ||
-      document.querySelector('.rn-learning-root')?.dataset?.noteId ||
       '';
   }
 
@@ -101,99 +102,11 @@
     throw new Error('INVALID_AI_JSON');
   }
 
-  function buildBatchPrompt(note, custom) {
-    const text = notePlain(note).slice(0, MAX_NOTE_CHARS);
-    return [
-      'You are an English learning analyzer for Thai learners.',
-      'Return valid JSON only. Do not use markdown.',
-      `Pronunciation standard: ${custom.ipaStandard}.`,
-      `Translation style: ${custom.translationStyle}.`,
-      'Target language: Thai.',
-      '',
-      'Analyze the note once for a language-learning reader.',
-      'Include IPA and translations based on meaning in context.',
-      'Deduplicate vocabulary by lemma, part of speech, and meaning sense.',
-      'If one lemma has multiple meanings, create separate vocabulary records.',
-      'Choose useful learning targets; skip easy stop words by default.',
-      '',
-      'JSON schema:',
-      '{',
-      '  "schemaVersion": 1,',
-      '  "document": {',
-      '    "summaryThai": "",',
-      '    "summarySimple": "",',
-      '    "tone": "",',
-      '    "detectedLevel": "A1|A2|B1|B2|C1|C2",',
-      '    "mainIdeas": [""]',
-      '  },',
-      '  "baseAnalysis": {',
-      '    "sentences": [',
-      '      {',
-      '        "id": "s1",',
-      '        "text": "",',
-      '        "translationThai": "",',
-      '        "naturalThai": "",',
-      '        "level": "",',
-      '        "grammarPointIds": ["g1"]',
-      '      }',
-      '    ],',
-      '    "vocabulary": [',
-      '      {',
-      '        "id": "v_word_sense",',
-      '        "lemma": "",',
-      '        "display": "",',
-      '        "ipa": "",',
-      `        "ipaStandard": "${custom.ipaStandard}",`,
-      '        "pos": "",',
-      '        "cefr": "",',
-      '        "translationThai": "",',
-      '        "meaningInContextThai": "",',
-      '        "exampleFromText": "",',
-      '        "showByDefault": true,',
-      '        "isLearningTarget": true',
-      '      }',
-      '    ],',
-      '    "grammarPoints": [',
-      '      {',
-      '        "id": "g1",',
-      '        "title": "",',
-      '        "pattern": "",',
-      '        "level": "",',
-      '        "explanationThai": "",',
-      '        "examplesFromText": [""]',
-      '      }',
-      '    ],',
-      '    "phrases": [',
-      '      { "text": "", "translationThai": "", "meaningThai": "", "exampleFromText": "" }',
-      '    ],',
-      '    "learningTargets": [',
-      '      { "type": "vocabulary|grammar|phrase", "id": "", "priority": 90, "reasonThai": "" }',
-      '    ],',
-      '    "cardCandidates": [',
-      '      {',
-      '        "type": "vocabulary|phrase|grammar",',
-      '        "front": "",',
-      '        "back": "",',
-      '        "ipa": "",',
-      '        "pos": "",',
-      '        "cefr": "",',
-      '        "example": "",',
-      '        "note": ""',
-      '      }',
-      '    ]',
-      '  }',
-      '}',
-      '',
-      'Note text:',
-      text
-    ].join('\n');
-  }
-
   function cleanArray(value) {
     return Array.isArray(value) ? value : [];
   }
 
-  function normalizeAnalysis(note, raw) {
+  function normalizeAnalysis(note, raw, model) {
     const base = raw?.baseAnalysis || {};
     const vocabulary = cleanArray(base.vocabulary)
       .filter(item => item && (item.lemma || item.display || item.translationThai))
@@ -216,7 +129,7 @@
       status: 'completed',
       noteId: note.id,
       contentHash: hashText(notePlain(note)),
-      model: MODEL,
+      model: model || window.WordJarAIConfig?.lastModel || 'Gemini',
       analyzedAt: new Date().toISOString(),
       config: { ...getCustom() },
       document: raw?.document || {},
@@ -237,94 +150,146 @@
     };
   }
 
-  async function requestGemini(prompt, maxOutputTokens = 8192) {
-    const apiKey = await ensureApiKey();
+  function buildBatchPrompt(note, custom) {
+    const text = notePlain(note).slice(0, MAX_NOTE_CHARS);
+    return [
+      'You are an English learning analyzer for Thai learners.',
+      'Return valid JSON only. Do not use markdown.',
+      `Pronunciation standard: ${custom.ipaStandard}.`,
+      `Translation style: ${custom.translationStyle}.`,
+      'Target language: Thai.',
+      '',
+      'Analyze the note once for a language-learning reader.',
+      'Include IPA and translations based on meaning in context.',
+      'Deduplicate vocabulary by lemma, part of speech, and meaning sense.',
+      'If one lemma has multiple meanings, create separate vocabulary records.',
+      'Choose useful learning targets; skip easy stop words by default.',
+      '',
+      'Schema:',
+      '{"schemaVersion":1,"document":{"summaryThai":"","summarySimple":"","tone":"","detectedLevel":"A1|A2|B1|B2|C1|C2","mainIdeas":[""]},"baseAnalysis":{"sentences":[{"id":"s1","text":"","translationThai":"","naturalThai":"","level":"","grammarPointIds":["g1"]}],"vocabulary":[{"id":"v_word_sense","lemma":"","display":"","ipa":"","ipaStandard":"","pos":"","cefr":"","translationThai":"","meaningInContextThai":"","exampleFromText":"","showByDefault":true,"isLearningTarget":true}],"grammarPoints":[{"id":"g1","title":"","pattern":"","level":"","explanationThai":"","examplesFromText":[""]}],"phrases":[{"text":"","translationThai":"","meaningThai":"","exampleFromText":""}],"learningTargets":[{"type":"vocabulary|grammar|phrase","id":"","priority":90,"reasonThai":""}],"cardCandidates":[{"type":"vocabulary|phrase|grammar","front":"","back":"","ipa":"","pos":"","cefr":"","example":"","note":""}]}}',
+      '',
+      'Note text:',
+      text
+    ].join('\n');
+  }
+
+  function shouldTryNextModel(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return error?.status === 404 ||
+      error?.status === 400 ||
+      message.includes('not found') ||
+      message.includes('unsupported') ||
+      message.includes('model') ||
+      message.includes('responsemimetype');
+  }
+
+  function buildGeminiBody(prompt, maxOutputTokens, forceJson) {
+    const body = {
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.2,
+        topP: 0.8,
+        maxOutputTokens
+      }
+    };
+    if (forceJson) body.generationConfig.responseMimeType = 'application/json';
+    return body;
+  }
+
+  async function callGeminiModel({ apiKey, model, prompt, maxOutputTokens, forceJson }) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 45000);
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        `https://generativelanguage.googleapis.com/${API_VERSION}/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           signal: controller.signal,
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.2,
-              topP: 0.8,
-              maxOutputTokens,
-              responseMimeType: 'application/json'
-            }
-          })
+          body: JSON.stringify(buildGeminiBody(prompt, maxOutputTokens, forceJson))
         }
       );
-      if (!response.ok) throw new Error(`AI_${response.status}`);
-      const payload = await response.json();
-      return payload?.candidates?.[0]?.content?.parts
-        ?.map(part => part.text || '')
-        .join('\n') || '';
+      const raw = await response.text();
+      let payload = null;
+      try { payload = JSON.parse(raw); } catch (err) {}
+      if (!response.ok) {
+        const message = payload?.error?.message || raw || `HTTP ${response.status}`;
+        const error = new Error(`AI_${response.status}: ${message}`);
+        error.status = response.status;
+        error.model = model;
+        throw error;
+      }
+      const text = payload?.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('\n') || '';
+      if (!text.trim()) throw new Error(`EMPTY_AI_RESPONSE from ${model}`);
+      return { text, model };
     } finally {
       clearTimeout(timer);
     }
   }
 
-  function setBanner(html) {
-    const core = document.getElementById('rnCoreLearningBanner');
-    const legacy = document.getElementById('rnLearningBanner');
-    if (core) core.innerHTML = html;
-    if (legacy) legacy.innerHTML = html;
+  async function callAI(prompt, maxOutputTokens = 8192) {
+    if (window.WordJarAIConfig?.callHighEndGemini) {
+      try {
+        const text = await WordJarAIConfig.callHighEndGemini(prompt, {
+          maxTokens: maxOutputTokens,
+          forceJson: true,
+          models: MODELS
+        });
+        return { text, model: window.WordJarAIConfig.lastModel || 'Gemini' };
+      } catch (err) {
+        if (!shouldTryNextModel(err)) throw err;
+      }
+    }
+
+    const apiKey = await ensureApiKey();
+    let lastError = null;
+    for (const model of MODELS) {
+      try {
+        return await callGeminiModel({ apiKey, model, prompt, maxOutputTokens, forceJson: true });
+      } catch (err) {
+        lastError = err;
+        console.warn(`Reader Note AI failed with ${model}`, err);
+        if (shouldTryNextModel(err)) {
+          try {
+            return await callGeminiModel({ apiKey, model, prompt, maxOutputTokens, forceJson: false });
+          } catch (retryErr) {
+            lastError = retryErr;
+            console.warn(`Reader Note AI retry failed with ${model}`, retryErr);
+          }
+        }
+        if (!shouldTryNextModel(lastError)) break;
+      }
+    }
+    throw lastError || new Error('AI_CALL_FAILED');
   }
 
-  function readyBanner(result) {
-    const base = result?.baseAnalysis || {};
-    return [
-      '<div class="rn-learning-chipline">',
-      '<span class="rn-learning-chip">AI analysis ready</span>',
-      `<span class="rn-learning-chip">${cleanArray(base.vocabulary).length} words</span>`,
-      `<span class="rn-learning-chip">${cleanArray(base.grammarPoints).length} grammar</span>`,
-      `<span class="rn-learning-chip">${esc(result?.config?.ipaStandard || getCustom().ipaStandard)}</span>`,
-      '</div>'
-    ].join('');
+  function setBanner(html) {
+    const core = document.getElementById('rnCoreLearningBanner');
+    if (core) core.innerHTML = html;
   }
 
   function loadingBanner(message) {
     return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">${esc(message)}</div><div class="rn-learning-banner-sub">Gemini is creating the learning cache.</div></div></div>`;
   }
 
+  function readyBanner(result) {
+    const base = result?.baseAnalysis || {};
+    return `<div class="rn-learning-chipline"><span class="rn-learning-chip">AI ready</span><span class="rn-learning-chip">${cleanArray(base.vocabulary).length} words</span><span class="rn-learning-chip">${cleanArray(base.grammarPoints).length} grammar</span><span class="rn-learning-chip">${esc(result.model || 'Gemini')}</span></div>`;
+  }
+
   function failedBanner(message, noteId) {
-    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">AI analysis failed</div><div class="rn-learning-banner-sub">${esc(message)}</div></div><button class="rn-btn primary" type="button" onclick="analyzeReaderNoteLearning('${esc(noteId)}')">Retry</button></div>`;
-  }
-
-  async function analyzeNote(note) {
-    const output = await requestGemini(buildBatchPrompt(note, getCustom()));
-    return normalizeAnalysis(note, extractJSON(output));
-  }
-
-  function buildIPAPrompt(vocabulary, standard) {
-    const items = vocabulary.map(item => ({
-      id: item.id,
-      lemma: item.lemma,
-      display: item.display,
-      pos: item.pos,
-      meaningThai: item.meaningInContextThai || item.translationThai,
-      example: item.exampleFromText
-    }));
-    return [
-      'Return valid JSON only. Do not use markdown.',
-      `Generate IPA pronunciations using this standard: ${standard}.`,
-      'Choose the pronunciation that matches each context.',
-      'Schema: { "items": { "vocabularyId": "IPA" } }',
-      JSON.stringify({ vocabulary: items })
-    ].join('\n');
+    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">AI analysis failed</div><div class="rn-learning-banner-sub">${esc(message)}</div></div><button class="rn-btn primary" type="button" data-rn-analyze="${esc(noteId)}">Retry</button></div>`;
   }
 
   function refreshDetail(noteId) {
     if (typeof window.renderReaderNoteLearningDetail === 'function') {
       window.renderReaderNoteLearningDetail(noteId);
-      return;
     }
-    document.dispatchEvent(new CustomEvent('wordjar:note-detail-rendered', { detail: { noteId } }));
+  }
+
+  async function analyzeNote(note) {
+    const { text, model } = await callAI(buildBatchPrompt(note, getCustom()), 8192);
+    return normalizeAnalysis(note, extractJSON(text), model);
   }
 
   window.analyzeReaderNoteLearning = async function analyzeReaderNoteLearning(noteId = '') {
@@ -335,8 +300,10 @@
       toastSafe('Note not found');
       return;
     }
+
     isRunning = true;
     setBanner(loadingBanner('Analyzing note...'));
+
     try {
       const result = await analyzeNote(note);
       D.readerNoteAnalyses[analysisKey(note)] = result;
@@ -348,11 +315,7 @@
       const message = String(err.message || '').includes('NO_API_KEY')
         ? 'Add Private API Key in Settings first.'
         : `Analyze Note failed: ${String(err.message || 'unknown error')}`;
-      D.readerNoteAnalyses[analysisKey(note)] = {
-        status: 'failed',
-        error: message,
-        failedAt: new Date().toISOString()
-      };
+      D.readerNoteAnalyses[analysisKey(note)] = { status: 'failed', error: message, failedAt: new Date().toISOString() };
       if (typeof save === 'function') save();
       setBanner(failedBanner(message, note.id));
       toastSafe(message);
@@ -369,42 +332,7 @@
     window.analyzeReaderNoteLearning(note.id);
   };
 
-  window.updateReaderNoteIPAOnly = async function updateReaderNoteIPAOnly(noteId = '') {
-    if (isRunning) return;
-    ensureData();
-    const note = noteById(noteId || currentNoteId());
-    const analysis = note ? D.readerNoteAnalyses[analysisKey(note)] : null;
-    const vocabulary = analysis?.baseAnalysis?.vocabulary || [];
-    const standard = getCustom().ipaStandard;
-    if (!note || !analysis?.status || !vocabulary.length) {
-      toastSafe('Analyze the note first');
-      return;
-    }
-    if (analysis.pronunciationLayers?.[standard]?.status === 'completed') {
-      toastSafe('IPA for this standard already exists');
-      return;
-    }
-    isRunning = true;
-    setBanner(loadingBanner(`Updating IPA · ${standard}`));
-    try {
-      const output = await requestGemini(buildIPAPrompt(vocabulary, standard), 4096);
-      const data = extractJSON(output);
-      analysis.pronunciationLayers = analysis.pronunciationLayers || {};
-      analysis.pronunciationLayers[standard] = {
-        status: 'completed',
-        items: data?.items || {},
-        updatedAt: new Date().toISOString()
-      };
-      analysis.config = { ...analysis.config, ipaStandard: standard };
-      if (typeof save === 'function') save();
-      setBanner(readyBanner(analysis));
-      toastSafe('IPA updated');
-      setTimeout(() => refreshDetail(note.id), 0);
-    } catch (err) {
-      setBanner(failedBanner(`IPA update failed: ${String(err.message || '')}`, note.id));
-      toastSafe('IPA update failed');
-    } finally {
-      isRunning = false;
-    }
+  window.updateReaderNoteIPAOnly = function updateReaderNoteIPAOnly() {
+    toastSafe('IPA-only update will be added after the base analysis is stable.');
   };
 })();
