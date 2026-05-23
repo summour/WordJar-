@@ -1,9 +1,9 @@
-// WordJar Reader Note AI Analysis V6
-// First stable pass: translate the full note in one Gemini call.
+// WordJar Reader Note AI Analysis V7
+// Stable pass: request IPA for the full note in one Gemini call. No translation.
 
 (function installReaderNoteAIAnalysis() {
-  if (window.__wordjarReaderNoteAIAnalysisInstalledV6) return;
-  window.__wordjarReaderNoteAIAnalysisInstalledV6 = true;
+  if (window.__wordjarReaderNoteAIAnalysisInstalledV7) return;
+  window.__wordjarReaderNoteAIAnalysisInstalledV7 = true;
   window.__wordjarReaderNoteAIAnalysisInstalled = true;
 
   const API_VERSION = 'v1beta';
@@ -72,7 +72,7 @@
   function getCustom() {
     ensureData();
     return {
-      translationStyle: 'natural',
+      ipaStandard: 'en-US',
       ...D.reader.noteCustom
     };
   }
@@ -87,33 +87,81 @@
     return key;
   }
 
-  function cleanArray(value) {
-    return Array.isArray(value) ? value : [];
+  function uniqueWords(text) {
+    const seen = new Set();
+    return (String(text || '').match(/[A-Za-z]+(?:['’-][A-Za-z]+)?/g) || [])
+      .map(word => word.replace(/[’]/g, "'"))
+      .filter(word => {
+        const key = word.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
   }
 
   function buildPrompt(note, custom) {
+    const text = notePlain(note);
+    const words = uniqueWords(text);
     return [
-      'Translate the full English note below into natural Thai.',
-      'Return only the Thai translation. Do not return JSON.',
-      'Do not add markdown, labels, comments, bullets, or explanations.',
-      'Preserve paragraph breaks as much as possible.',
-      `Translation style: ${custom.translationStyle}.`,
+      'Generate IPA pronunciations for English words from the note below.',
+      'Return ONLY plain text lines. Do not return JSON or markdown.',
+      'Format each line exactly as: word<TAB>/ipa/',
+      'Keep the word exactly as listed before the tab.',
+      'Do not include meanings, translations, grammar, bullets, or explanations.',
+      `IPA standard: ${custom.ipaStandard}.`,
+      'Use the note context when a word has more than one pronunciation.',
       '',
-      'ENGLISH NOTE:',
-      notePlain(note)
+      'WORDS:',
+      words.join('\n'),
+      '',
+      'NOTE CONTEXT:',
+      text
     ].join('\n');
   }
 
-  function normalizeTranslation(text) {
-    return String(text || '')
-      .replace(/^```(?:text|thai)?\s*/i, '')
-      .replace(/```$/i, '')
-      .replace(/^\s*(คำแปลไทย|คำแปล|Thai translation|Translation)\s*[:：]\s*/i, '')
-      .trim();
+  function parseIPALines(output, fallbackWords) {
+    const map = new Map();
+    String(output || '').split(/\n+/).forEach(rawLine => {
+      const line = rawLine.trim();
+      if (!line) return;
+
+      const tabParts = line.split('\t');
+      if (tabParts.length >= 2) {
+        const word = tabParts[0].trim();
+        const ipa = tabParts.slice(1).join('\t').trim();
+        if (word && ipa) map.set(word.toLowerCase(), { word, ipa });
+        return;
+      }
+
+      const match = line.match(/^(.+?)\s*[:：\-–—|]\s*(\/.+\/|\[.+\])$/);
+      if (match) map.set(match[1].trim().toLowerCase(), {
+        word: match[1].trim(),
+        ipa: match[2].trim()
+      });
+    });
+
+    return fallbackWords
+      .map((word, index) => {
+        const hit = map.get(word.toLowerCase());
+        if (!hit?.ipa) return null;
+        return {
+          id: `ipa_${index + 1}_${word.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`,
+          lemma: word,
+          display: word,
+          ipa: hit.ipa,
+          ipaStandard: getCustom().ipaStandard,
+          translationThai: '',
+          meaningInContextThai: '',
+          showByDefault: true,
+          isLearningTarget: true
+        };
+      })
+      .filter(Boolean);
   }
 
   function normalizeAnalysis(note, output, model) {
-    const translationThai = normalizeTranslation(output);
+    const words = uniqueWords(notePlain(note));
+    const vocabulary = parseIPALines(output, words);
 
     return {
       status: 'completed',
@@ -121,17 +169,22 @@
       contentHash: hashText(notePlain(note)),
       model: model || window.WordJarAIConfig?.lastModel || 'Gemini',
       analyzedAt: new Date().toISOString(),
-      config: { ...getCustom(), scope: 'full_note_translation' },
-      document: { translationThai },
+      config: { ...getCustom(), scope: 'full_note_ipa' },
+      document: {},
       baseAnalysis: {
         sentences: [],
-        vocabulary: [],
+        vocabulary,
         grammarPoints: [],
         phrases: [],
         learningTargets: [],
         cardCandidates: []
       },
-      pronunciationLayers: {}
+      pronunciationLayers: {
+        [getCustom().ipaStandard]: {
+          status: 'completed',
+          items: Object.fromEntries(vocabulary.map(item => [item.id, item.ipa || '']))
+        }
+      }
     };
   }
 
@@ -149,7 +202,7 @@
     return {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
-        temperature: 0.2,
+        temperature: 0.1,
         topP: 0.9,
         maxOutputTokens
       }
@@ -195,7 +248,7 @@
         return await callGeminiModel({ apiKey, model, prompt, maxOutputTokens });
       } catch (err) {
         lastError = err;
-        console.warn(`Reader Note full translation failed with ${model}`, err);
+        console.warn(`Reader Note IPA failed with ${model}`, err);
         if (!shouldTryNextModel(err)) break;
       }
     }
@@ -208,16 +261,18 @@
   }
 
   function loadingBanner(message) {
-    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">${esc(message)}</div><div class="rn-learning-banner-sub">Gemini is translating the full note in one request.</div></div></div>`;
+    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">${esc(message)}</div><div class="rn-learning-banner-sub">Gemini is generating IPA for the full note in one request.</div></div></div>`;
   }
 
   function readyBanner(result) {
-    const length = String(result?.document?.translationThai || '').length;
-    return `<div class="rn-learning-chipline"><span class="rn-learning-chip">Translation ready</span><span class="rn-learning-chip">${length} chars</span><span class="rn-learning-chip">${esc(result.model || 'Gemini')}</span></div>`;
+    const count = Array.isArray(result?.baseAnalysis?.vocabulary)
+      ? result.baseAnalysis.vocabulary.length
+      : 0;
+    return `<div class="rn-learning-chipline"><span class="rn-learning-chip">IPA ready</span><span class="rn-learning-chip">${count} words</span><span class="rn-learning-chip">${esc(result.model || 'Gemini')}</span></div>`;
   }
 
   function failedBanner(message, noteId) {
-    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">Translation failed</div><div class="rn-learning-banner-sub">${esc(message)}</div></div><button class="rn-btn primary" type="button" data-rn-analyze="${esc(noteId)}">Retry</button></div>`;
+    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">IPA failed</div><div class="rn-learning-banner-sub">${esc(message)}</div></div><button class="rn-btn primary" type="button" data-rn-analyze="${esc(noteId)}">Retry</button></div>`;
   }
 
   function refreshDetail(noteId) {
@@ -241,19 +296,19 @@
     }
 
     isRunning = true;
-    setBanner(loadingBanner('Translating note...'));
+    setBanner(loadingBanner('Generating IPA...'));
 
     try {
       const result = await analyzeNote(note);
       D.readerNoteAnalyses[analysisKey(note)] = result;
       if (typeof save === 'function') save();
       setBanner(readyBanner(result));
-      toastSafe('Translation ready');
+      toastSafe('IPA ready');
       setTimeout(() => refreshDetail(note.id), 0);
     } catch (err) {
       const message = String(err.message || '').includes('NO_API_KEY')
         ? 'Add Private API Key in Settings first.'
-        : `Translation failed: ${String(err.message || 'unknown error')}`;
+        : `IPA failed: ${String(err.message || 'unknown error')}`;
       D.readerNoteAnalyses[analysisKey(note)] = { status: 'failed', error: message, failedAt: new Date().toISOString() };
       if (typeof save === 'function') save();
       setBanner(failedBanner(message, note.id));
@@ -271,7 +326,7 @@
     window.analyzeReaderNoteLearning(note.id);
   };
 
-  window.updateReaderNoteIPAOnly = function updateReaderNoteIPAOnly() {
-    toastSafe('IPA will be added after full-note translation is stable.');
+  window.updateReaderNoteIPAOnly = function updateReaderNoteIPAOnly(noteId = '') {
+    window.reanalyzeReaderNoteLearning(noteId || currentNoteId());
   };
 })();
