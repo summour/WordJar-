@@ -94,6 +94,7 @@
       .then(() => loadOptionalModule('js/reader-mobile-rich-clear-panel-fix.js'))
       .then(() => loadOptionalModule('js/reader-note-learning-surface.js'))
       .then(() => loadOptionalModule('js/reader-note-detail-core-bridge.js'))
+      .then(() => loadOptionalModule('js/reader-note-detail-route-override.js'))
       .then(() => loadOptionalModule('js/reader-smart-analysis.js'))
       .then(rebindReaderAI);
   }
@@ -123,6 +124,7 @@
       .then(() => loadOptionalModule('js/reader-mobile-rich-clear-panel-fix.js'))
       .then(() => loadOptionalModule('js/reader-note-learning-surface.js'))
       .then(() => loadOptionalModule('js/reader-note-detail-core-bridge.js'))
+      .then(() => loadOptionalModule('js/reader-note-detail-route-override.js'))
       .then(() => loadOptionalModule('js/reader-smart-analysis.js'))
       .then(rebindReaderAI)
       .then(() => loadOptionalModule('js/reader-format-novel.js'))
