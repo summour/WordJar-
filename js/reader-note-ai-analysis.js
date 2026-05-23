@@ -1,4 +1,4 @@
-// WordJar Reader Note AI Analysis V1
+// WordJar Reader Note AI Analysis V2
 // Adds real Gemini batch analysis to the Note Detail learning surface.
 
 (function installReaderNoteAIAnalysis() {
@@ -42,6 +42,14 @@
     return String(note?.text || plainFromHTML(note?.html || '') || '').trim();
   }
 
+  function currentNoteId() {
+    const page = document.getElementById('readerNotesPage');
+    return page?.dataset?.learningNoteId ||
+      page?.querySelector('.rn-learning-core')?.dataset?.noteId ||
+      document.querySelector('.rn-learning-root')?.dataset?.noteId ||
+      '';
+  }
+
   function noteById(id) {
     ensureData();
     return D.readerNotes.find(note => String(note.id) === String(id));
@@ -74,7 +82,9 @@
   async function ensureApiKey() {
     if (typeof window.initAppConfig === 'function') await window.initAppConfig();
     const memoryKey = window.getApiKeyFromMemory?.() || '';
-    const key = String(window.globalApiKey || memoryKey).trim();
+    const privateKey = window.WordJarPrivateConfig?.apiKey || '';
+    const localKey = localStorage.getItem('wordjar_api_key') || '';
+    const key = String(window.globalApiKey || memoryKey || privateKey || localKey).trim();
     if (!key) throw new Error('NO_API_KEY');
     return key;
   }
@@ -260,8 +270,10 @@
   }
 
   function setBanner(html) {
-    const banner = document.getElementById('rnLearningBanner');
-    if (banner) banner.innerHTML = html;
+    const core = document.getElementById('rnCoreLearningBanner');
+    const legacy = document.getElementById('rnLearningBanner');
+    if (core) core.innerHTML = html;
+    if (legacy) legacy.innerHTML = html;
   }
 
   function readyBanner(result) {
@@ -277,11 +289,11 @@
   }
 
   function loadingBanner(message) {
-    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">${esc(message)}</div><div class="rn-learning-banner-sub">Keep this sheet open until the cache is saved.</div></div></div>`;
+    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">${esc(message)}</div><div class="rn-learning-banner-sub">Gemini is creating the learning cache.</div></div></div>`;
   }
 
   function failedBanner(message, noteId) {
-    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">AI analysis failed</div><div class="rn-learning-banner-sub">${esc(message)}</div></div><button class="rn-text-btn primary" type="button" onclick="analyzeReaderNoteLearning('${esc(noteId)}')">Retry</button></div>`;
+    return `<div class="rn-learning-banner"><div><div class="rn-learning-banner-title">AI analysis failed</div><div class="rn-learning-banner-sub">${esc(message)}</div></div><button class="rn-btn primary" type="button" onclick="analyzeReaderNoteLearning('${esc(noteId)}')">Retry</button></div>`;
   }
 
   async function analyzeNote(note) {
@@ -307,11 +319,22 @@
     ].join('\n');
   }
 
+  function refreshDetail(noteId) {
+    if (typeof window.renderReaderNoteLearningDetail === 'function') {
+      window.renderReaderNoteLearningDetail(noteId);
+      return;
+    }
+    document.dispatchEvent(new CustomEvent('wordjar:note-detail-rendered', { detail: { noteId } }));
+  }
+
   window.analyzeReaderNoteLearning = async function analyzeReaderNoteLearning(noteId = '') {
     if (isRunning) return;
     ensureData();
-    const note = noteById(noteId || document.querySelector('.rn-learning-root')?.dataset.noteId || '');
-    if (!note) return;
+    const note = noteById(noteId || currentNoteId());
+    if (!note) {
+      toastSafe('Note not found');
+      return;
+    }
     isRunning = true;
     setBanner(loadingBanner('Analyzing note...'));
     try {
@@ -320,10 +343,11 @@
       if (typeof save === 'function') save();
       setBanner(readyBanner(result));
       toastSafe('Note analysis ready');
+      setTimeout(() => refreshDetail(note.id), 0);
     } catch (err) {
       const message = String(err.message || '').includes('NO_API_KEY')
         ? 'Add Private API Key in Settings first.'
-        : 'Analyze Note failed. Check the API key or retry.';
+        : `Analyze Note failed: ${String(err.message || 'unknown error')}`;
       D.readerNoteAnalyses[analysisKey(note)] = {
         status: 'failed',
         error: message,
@@ -338,7 +362,7 @@
   };
 
   window.reanalyzeReaderNoteLearning = function reanalyzeReaderNoteLearning(noteId = '') {
-    const note = noteById(noteId || document.querySelector('.rn-learning-root')?.dataset.noteId || '');
+    const note = noteById(noteId || currentNoteId());
     if (!note) return;
     delete D.readerNoteAnalyses[analysisKey(note)];
     if (typeof save === 'function') save();
@@ -348,7 +372,7 @@
   window.updateReaderNoteIPAOnly = async function updateReaderNoteIPAOnly(noteId = '') {
     if (isRunning) return;
     ensureData();
-    const note = noteById(noteId || document.querySelector('.rn-learning-root')?.dataset.noteId || '');
+    const note = noteById(noteId || currentNoteId());
     const analysis = note ? D.readerNoteAnalyses[analysisKey(note)] : null;
     const vocabulary = analysis?.baseAnalysis?.vocabulary || [];
     const standard = getCustom().ipaStandard;
@@ -375,8 +399,9 @@
       if (typeof save === 'function') save();
       setBanner(readyBanner(analysis));
       toastSafe('IPA updated');
+      setTimeout(() => refreshDetail(note.id), 0);
     } catch (err) {
-      setBanner(failedBanner('IPA update failed. Retry later.', note.id));
+      setBanner(failedBanner(`IPA update failed: ${String(err.message || '')}`, note.id));
       toastSafe('IPA update failed');
     } finally {
       isRunning = false;
